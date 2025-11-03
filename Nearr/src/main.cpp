@@ -10,7 +10,7 @@ int main() {
 	Move ruch(F1,F4,WHITE_BISHOP);
 	p.make_move(ruch);
 
-	
+	cout << "change";
 
 	ToArray(p,board);
 	printBoard(board);
