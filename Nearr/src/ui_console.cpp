@@ -28,7 +28,7 @@ void ToArray(const Position& curP, char(&board)[8][8]) {
         }
 
         for (int j = 0; j < 64; j++) {
-            if (curP.board[i] & (1ULL << j)) {
+            if (curP.bitBoard[i] & (1ULL << j)) {
                 int row = 7 - (j / 8); 
                 int col = j % 8;
                 board[row][col] = piece;

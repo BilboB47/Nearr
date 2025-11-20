@@ -1,9 +1,10 @@
 #pragma once
 #include <cstdint>
 
-enum Piece : uint8_t {
+enum Piece : uint8_t { //s¹ równoznacze z indexami w bitboard
     WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN, WHITE_KING,
     BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING,
+    WHITE_ALL, BLACK_ALL,
     NO_PIECE = 255
 };
 
@@ -18,7 +19,18 @@ enum Square : uint8_t {
     A7, B7, C7, D7, E7, F7, G7, H7,
     A8, B8, C8, D8, E8, F8, G8, H8
 };
- 
+
+enum Color { WHITE, BLACK };
+
+ //56 57 58 59 60 61 62 63
+ //48 49 50 51 52 53 54 55
+ //40 41 42 43 44 45 46 47
+ //32 33 34 35 36 37 38 39
+ //24 25 26 27 28 29 30 31
+ //16 17 18 19 20 21 22 23
+ //8  9 10 11 12 13 14 15   
+ //0  1  2  3  4  5  6  7
+
 
 
 

@@ -27,13 +27,13 @@
     <ClCompile Include="src\ui_console.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="defs.hpp" />
-    <ClInclude Include="src\eval.hpp" />
-    <ClInclude Include="src\move.hpp" />
-    <ClInclude Include="src\movegen.hpp" />
-    <ClInclude Include="src\position.hpp" />
-    <ClInclude Include="src\search.hpp" />
-    <ClInclude Include="src\ui_console.hpp" />
+    <ClInclude Include="include\defs.hpp" />
+    <ClInclude Include="include\eval.hpp" />
+    <ClInclude Include="include\move.hpp" />
+    <ClInclude Include="include\movegen.hpp" />
+    <ClInclude Include="include\position.hpp" />
+    <ClInclude Include="include\search.hpp" />
+    <ClInclude Include="include\ui_console.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -119,6 +119,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

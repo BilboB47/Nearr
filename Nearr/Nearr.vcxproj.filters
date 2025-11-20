@@ -16,6 +16,9 @@
     <Filter Include="src">
       <UniqueIdentifier>{4a251dc9-60c3-4725-942d-09c881b9f7ad}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{a24efef8-52b8-41e5-a717-80a475b06d7d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -38,26 +41,26 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\position.hpp">
-      <Filter>src</Filter>
+    <ClInclude Include="include\defs.hpp">
+      <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\move.hpp">
-      <Filter>src</Filter>
+    <ClInclude Include="include\eval.hpp">
+      <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\movegen.hpp">
-      <Filter>src</Filter>
+    <ClInclude Include="include\move.hpp">
+      <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\search.hpp">
-      <Filter>src</Filter>
+    <ClInclude Include="include\movegen.hpp">
+      <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\eval.hpp">
-      <Filter>src</Filter>
+    <ClInclude Include="include\position.hpp">
+      <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\ui_console.hpp">
-      <Filter>src</Filter>
+    <ClInclude Include="include\search.hpp">
+      <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="defs.hpp">
-      <Filter>src</Filter>
+    <ClInclude Include="include\ui_console.hpp">
+      <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
