@@ -18,7 +18,7 @@ void generateBishopMoves(const Position& pos, std::vector<Move>& moves);
 void generateRookMoves(const Position& pos, std::vector<Move>& moves);
 void generateQueenMoves(const Position& pos, std::vector<Move>& moves);
 void generateKingMoves(const Position& pos, std::vector<Move>& moves);
-//bool isSquareAttacked(const Position& pos, int square, Color attacker);
+
 
 
 

@@ -25,12 +25,39 @@ void Position::set_start_position() {
     moveNumber = 1;           // pierwszy ruch
 }
 
+void Position::set_position(std::string s, bool isWhite)
+{
+    isWhiteMove = isWhite;
+    memset(bitBoard, 0, sizeof(bitBoard));
+    int start_row = 56;
+    int column = 0;
+    for (int p = 0; p < s.length(); p++){
+        if (s[p] == '/'){
+            start_row -= 8;
+            column = 0;
+            continue;
+        }
+
+        uint8_t piece = piece_char_to_number(s[p]);
+        if (piece != NO_PIECE) {
+            bitBoard[piece] |= (1ULL << (start_row + column));
+            column++;
+        }else {
+            column += s[p] - '0';
+        }
+    }
+
+    bitBoard[12] = bitBoard[0] | bitBoard[1] | bitBoard[2] | bitBoard[3] | bitBoard[4] | bitBoard[5];
+    bitBoard[13] = bitBoard[6] | bitBoard[7] | bitBoard[8] | bitBoard[9] | bitBoard[10] | bitBoard[11];
+    //rnbqkbnr / pppppppp / 8 / 8 / 8 / 8 / PPPPPPPP / RNBQKBNR
+}
+
 void Position::make_move(const Move& move){
 
     if (move.piece == NO_PIECE)return;
 
     //usun i dodaj ruszon¹ figure
-    bitBoard[move.piece] &= ~(1ULL << move.from);
+    bitBoard[move.piece] &= ~(1ULL << move.from); 
     bitBoard[move.piece] |= (1ULL << move.to);
 
     //usun i dodaj z biboard gdzie s¹ wszystkie figury
@@ -61,4 +88,28 @@ uint8_t Position::piece_on_square(int sq) const
     }
     return NO_PIECE;
 }
+
+uint8_t Position::piece_char_to_number(const char c)
+{
+    switch (c)
+    {
+    case 'P': return WHITE_PAWN;
+    case 'N': return WHITE_KNIGHT;
+    case 'B': return WHITE_BISHOP;
+    case 'R': return WHITE_ROOK;
+    case 'Q': return WHITE_QUEEN;
+    case 'K': return WHITE_KING;
+
+    case 'p': return BLACK_PAWN;
+    case 'n': return BLACK_KNIGHT;
+    case 'b': return BLACK_BISHOP;
+    case 'r': return BLACK_ROOK;
+    case 'q': return BLACK_QUEEN;
+    case 'k': return BLACK_KING;
+
+    default:
+        return NO_PIECE;
+    }
+}
+
 
