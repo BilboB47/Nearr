@@ -1,14 +1,234 @@
 #include "movegen.hpp"
 
-std::array<std::vector<int>, 64> kingAttacks{};
-std::array<std::vector<int>, 64> knightAttacks{};
+uint64_t kingAttacks[64]{};
+uint64_t knightAttacks[64]{};
+//wie¿a
+//WZÓR index = (B * M) >> S
+uint64_t RookMasks[64]{};//blokerów dla danego pola | B
+uint64_t RookMagicNumbers[64]{};//magiczna liczba dla danego pola  | M
+uint64_t RookShifts[64]{};//przesuniecie bitowe dla danego pola | S 
+uint64_t RookOffsets[64]{};//index startowy segmentu dla danego pola w RookAttackTable 
+uint64_t RookAttackTable[ROOK_ATTACK_TABLE_SIZE]{};//wszystkie mo¿liwe ataki i jest podzielona na segmenty dla danego pola|a1|a2|
+
+
+inline int pop_lsb(uint64_t* bitboard)
+{
+	unsigned long int index;
+	if (_BitScanForward64(&index, *bitboard)){
+		return (int)index;
+	}
+	return -1;
+}
+int count_set_bits(uint64_t bb) {
+	return (int)__popcnt64(bb);
+}
+
+//56 57 58 59 60 61 62 63
+//48 49 50 51 52 53 54 55
+//40 41 42 43 44 45 46 47
+//32 33 34 35 36 37 38 39
+//24 25 26 27 28 29 30 31
+//16 17 18 19 20 21 22 23
+//8  9 10 11 12 13 14 15   
+//0  1  2  3  4  5  6  7
+
+
+void initRookMasks(){
+	
+	for (int i = 0; i < 64; i++){
+		uint64_t masc = 0ULL;
+		int row = i / 8;
+		int col = i % 8;
+		
+		for (int j = col+1; j < 7; j++)masc |= ((1ULL) << (row*8 + j));//prawo
+		for (int j = col-1; j > 0; j--)masc |= ((1ULL) << (row * 8 + j));//lewo
+		for (int j = row+1; j < 7; j++)masc |= ((1ULL) << (j * 8 + col));//góra
+		for (int j = row-1; j > 0; j--)masc |= ((1ULL) << (j * 8 + col));//dó³
+
+		RookMasks[i] = masc;
+	}
+}//generuje maske blokerow
+uint64_t get_rook_attacks_slow(int square, uint64_t blockers) { 
+	uint64_t moves=0ULL;
+	int row = square / 8;
+	int col = square % 8;
+
+	for (int j = col + 1; j < 8; j++){//prawo
+		moves |= ((1ULL) << (row * 8 + j));
+		if (blockers & ((1ULL) << (row * 8 + j)))break;
+	}
+	for (int j = col - 1; j >= 0; j--) {//lewo
+		moves |= ((1ULL) << (row * 8 + j));
+		if (blockers & ((1ULL) << (row * 8 + j)))break;
+	}
+	for (int j = row + 1; j < 8; j++) {//góra
+		moves |= ((1ULL) << (j * 8 + col));
+		if (blockers & ((1ULL) << (j * 8 + col)))break;
+	}
+	for (int j = row - 1; j >= 0; j--) {//dó³
+		moves |= ((1ULL) << (j * 8 + col));
+		if (blockers & ((1ULL) << (j * 8 + col)))break;
+	}
+
+
+	return moves;
+}//na podstawie blockers robi gdzie mo¿na iœæ
+void generate_blocker_patterns(uint64_t mask, int num_bits, std::vector<uint64_t>& patterns) {//generuje wszystkie mo¿liwe ustawienie bloków
+
+
+	int *relevant_squares = new int[num_bits];
+	int index = 0;
+	for (int i = 0; i < 64; i++) {
+		if (mask & (1ULL << i)){
+			relevant_squares[index] = i; //watchout 
+			index++;
+		}
+	}
+
+	patterns.clear();
+	
+	int num_patterns = (1ULL) << num_bits;
+	for (int i = 0; i < num_patterns; i++) { //licznik binarny przez którego np.11001 | 1 - oznacza ustaw , 0 - skip
+		uint64_t blocker = (0ULL);
+		
+		for (int j = 0; j < num_bits;j++) { //patrzy czy 1 jest na tej pozycji jeœli tak to ustaw to na podstawie  relevant_squares[j] w prawidzej masce
+			if (i & (1 << j)) {
+
+				int square_index = relevant_squares[j];
+
+				blocker |= (1ULL << square_index);
+			}
+		}
+
+
+		patterns.emplace_back(blocker);
+	}
+
+	delete[] relevant_squares;
+}
+
+uint64_t random_uint64(std::mt19937_64& generator, std::uniform_int_distribution<uint64_t>& dystrybucja) {
+	return dystrybucja(generator);
+}
+uint64_t generate_filtered_magic_candidate(std::mt19937_64& generator, std::uniform_int_distribution<uint64_t>& dystrybucja) {
+	uint64_t r1 = random_uint64(generator, dystrybucja);
+	uint64_t r2 = random_uint64(generator, dystrybucja);
+	uint64_t r3 = random_uint64(generator, dystrybucja);
+
+	return r1 & r2 & r3;
+}
+
+void initRookMagics() {	
+
+	initRookMasks();
+
+	int segment_start = 0;
+	for (int i = 0; i < 64; i++) { //wyliczanie segmentów
+		RookOffsets[i] = segment_start;
+
+		//jaki rozmiar bedzie mial segment
+		int num_bits = count_set_bits(RookMasks[i]);
+		int num_patterns = (1ULL) << num_bits;
+
+		RookShifts[i] = 64 - num_bits;
+
+		//o ile dalej bedzie w takim razie kolejny
+		segment_start += num_patterns;
+	}
+
+	//RookAttackTable[ROOK_ATTACK_TABLE_SIZE]  czy dynamicznie alkowaæ rozmiar?
+
+	std::random_device rd;
+	std::mt19937_64 gen(rd());
+	std::uniform_int_distribution<uint64_t> distrib;
+
+	for (int i = 0; i < 64; i++) {
+		//wszystkie mo¿liwe ustawienia bloków
+		std::vector<uint64_t> patterns;
+		generate_blocker_patterns(RookMasks[i], count_set_bits(RookMasks[i]), patterns); //B
+
+		std::vector<uint64_t> attacks; // A
+		// Ataki dla ka¿dego ukladu bloków 
+		for (const auto& blocker_key : patterns) {
+			attacks.emplace_back(get_rook_attacks_slow(i, blocker_key));
+		}
+
+		uint64_t magic_candidate;
+		int R = count_set_bits(RookMasks[i]); // R
+		int shift = RookShifts[i];            // S
+		int num_patterns = patterns.size();
+
+		std::vector<uint64_t> used_attacks(num_patterns, 0ULL); //sprawdzanie kolizji
+		
+		bool collison;
+		do{
+			std::fill(used_attacks.begin(), used_attacks.end(), 0ULL);
+			collison = false;
+			magic_candidate = generate_filtered_magic_candidate(gen, distrib);
+
+			for (int j = 0; j < num_patterns; j++){
+				
+				uint64_t blocker = patterns[j];
+				uint64_t atack_value = attacks[j];
+				//WZÓR index = (B * M) >> S
+				uint64_t hash_index = (blocker * magic_candidate) >> shift;
+
+				//sprawdzanie kolizji
+				if (used_attacks[hash_index] == (0ULL)){
+					used_attacks[hash_index] = atack_value;
+				}else if (used_attacks[hash_index] != atack_value) {
+					// Jest zajête i wartoœæ jest RÓ¯NA - to jest PRAWDZIWA kolizja!
+					collison = true;
+					break;
+				}
+			}
+
+
+		} while (collison);
+
+
+		
+
+		RookMagicNumbers[i] = magic_candidate;
+		uint64_t offset = RookOffsets[i];
+
+		for (int j = 0; j < num_patterns; ++j) {
+			uint64_t blocker = patterns[j];
+
+			uint64_t final_hash_index = (blocker * magic_candidate) >> shift;
+
+			RookAttackTable[offset + final_hash_index] = used_attacks[final_hash_index];
+		}
+
+	}
+}
+
+uint64_t get_rook_attacks(int square, uint64_t board) {
+
+	//co blokuje wie¿e na tym polu
+	uint64_t blockers = board & RookMasks[square];
+
+	// jaki jest index haszujacy
+	uint64_t magic = RookMagicNumbers[square];
+	uint64_t shift = RookShifts[square];
+	uint64_t hash_index = (blockers * magic) >> shift;
+
+	//faktyczny adres
+	uint64_t offset = RookOffsets[square];
+	uint64_t final_index = offset + hash_index;
+
+	//co pod jest pod nim
+	return RookAttackTable[final_index];
+}
+
+
+
 
 void initAttackTables()
 {
 	initKingAttacks();
 	initKnightAttacks();
 }
-
 void initKingAttacks()
 {
 	int jumps[8][2] = {
@@ -26,12 +246,11 @@ void initKingAttacks()
 			int cur_row = jumps[j][1] + row;
 
 			if ((0 <= cur_col && cur_col <= 7) && (0 <= cur_row && cur_row <= 7)) {
-				kingAttacks[i].push_back(cur_row * 8 + cur_col);
+				kingAttacks[i] |= ((1ULL) << (cur_row * 8 + cur_col));
 			}
 		}
 	}
 }//wypisuje tablice legalnych ruchów dla króla w wybranej jego pozycji
-
 void initKnightAttacks()
 {	
 	int jumps[8][2] = { //jaki ruch moze byæ wykonany L
@@ -48,12 +267,13 @@ void initKnightAttacks()
 			int cur_row = jumps[j][1] + row;
 
 			if ((0 <= cur_col && cur_col <= 7) && (0 <= cur_row && cur_row <= 7)) { //niewychodzi poza plansze?
-				knightAttacks[i].push_back(cur_row*8+cur_col);
+				knightAttacks[i] |= ((1ULL)<<(cur_row*8+cur_col));
 			}
 		}
 	}
 }
-//wypisuje tablice legalnych ruchów dla szkocza w wybranej jego pozycji
+
+
 
 std::vector<Move> generateMoves(const Position& pos)
 {
@@ -91,219 +311,27 @@ std::vector<Move> generateMoves(const Position& pos)
 
 void generatePawnMoves(const Position& pos, std::vector<Move>& moves)
 {
-	//WHITE_PAWN - 0
-	uint8_t index_piece = (pos.isWhiteMove) ? WHITE_PAWN : BLACK_PAWN;
-	for (int i = 0; i < 64; i++) {
-		if (pos.bitBoard[index_piece] & (1ULL << i)) {//czy jest na tym polu pion?
-		//pojscie o 1 do przodu
-			int to = i + ((pos.isWhiteMove) ? 8 : -8);
-			if (!((pos.bitBoard[WHITE_ALL] | pos.bitBoard[BLACK_ALL]) & (1ULL << to))) { //sprawdza czy jeden przed nim cos stoi
-				uint8_t promo = NO_PIECE;
-				if ((pos.isWhiteMove && to >= 56) || (!pos.isWhiteMove && to <= 7)) {
-					promo = ((pos.isWhiteMove) ? WHITE_QUEEN : BLACK_QUEEN);
-				}
-				//dodanie ruchu o 1 do listy move
-				moves.push_back(Move(i, to, index_piece, NO_PIECE, promo));
-			}
-
-		//pojscie o 2 do przodu 
-			if ((pos.isWhiteMove && i >= 8 && i <= 15) || (!pos.isWhiteMove && i >= 48 && i <= 55)) {
-				int to2 = i + ((pos.isWhiteMove) ? 16 : -16);
-				if ( !((pos.bitBoard[WHITE_ALL] | pos.bitBoard[BLACK_ALL]) & (1ULL << to)) &&
-					 !((pos.bitBoard[WHITE_ALL] | pos.bitBoard[BLACK_ALL]) & (1ULL << to2)) ) { //sprawdza czy jeden i dwa przed nim cos stoi
-
-					//dodanie ruchu o 2 do listy move
-					moves.push_back(Move(i, to2, index_piece, NO_PIECE, NO_PIECE));
-				}			
-			}
-			
-		//bicie o jeden w prawo i lewo 
-			int left = pos.isWhiteMove ? i + 7 : i - 9;
-			int right = pos.isWhiteMove ? i + 9 : i - 7;
-
-			uint8_t oponnent = pos.isWhiteMove ? BLACK_ALL : WHITE_ALL;
-
-			if (i%8!=0) {//tylko poza lew¹ stron¹
-
-				uint8_t promo = NO_PIECE;
-				if ((pos.isWhiteMove && left >= 56) || (!pos.isWhiteMove && left <= 7)) {
-					promo = ((pos.isWhiteMove) ? WHITE_QUEEN : BLACK_QUEEN);
-				}
-
-				if (pos.bitBoard[oponnent] & (1ULL << left)) {//sprawdza czy jest coœ do bicia
-					moves.push_back(Move(i, left, index_piece, pos.piece_on_square(left), promo));
-				}
-			}
-
-			if (i % 8 != 7) {//tylko poza prawa stron¹
-
-				uint8_t promo = NO_PIECE;
-				if ((pos.isWhiteMove && right >= 56) || (!pos.isWhiteMove && right <= 7)) {
-					promo = ((pos.isWhiteMove) ? WHITE_QUEEN : BLACK_QUEEN);
-				}
-
-				if (pos.bitBoard[oponnent] & (1ULL << right)) {//sprawdza czy jest coœ do bicia
-					moves.push_back(Move(i, right, index_piece, pos.piece_on_square(right),promo));
-				}	
-			}
-
-				
-			//MO¯NA DODAÆ enPassant
-		}
-	}
 }
 void generateKnightMoves(const Position& pos, std::vector<Move>& moves)
 {
-	uint8_t index_piece = (pos.isWhiteMove) ? WHITE_KNIGHT : BLACK_KNIGHT;
-	uint8_t friendly = pos.isWhiteMove ? WHITE_ALL : BLACK_ALL;
-	uint8_t oponnent = pos.isWhiteMove ? BLACK_ALL : WHITE_ALL;
+	uint64_t friendly = pos.bitBoard[pos.isWhiteMove ? WHITE_ALL : BLACK_ALL];
+	uint64_t enemy = pos.bitBoard[pos.isWhiteMove ? BLACK_ALL : WHITE_ALL];
+	uint64_t knight = pos.bitBoard[pos.isWhiteMove ? WHITE_KNIGHT : BLACK_KNIGHT];
 
-	for (int i = 0; i < 64; i++) {
-		if (pos.bitBoard[index_piece] & (1ULL << i)) {
-
-			for (const int jump : knightAttacks[i]){ //patrze na jakie pola moze sie ruszyc skoczek
-				if (pos.bitBoard[friendly] & (1ULL << jump))continue; //jesli jest tam ten sam kolor to nie ma co
-				uint8_t piece = NO_PIECE;
-				if (pos.bitBoard[oponnent] & (1ULL << jump)){ //jakiego piona zbije ten ruch
-					piece = pos.piece_on_square(jump);
-				}
-				moves.push_back(Move(i, jump, index_piece, piece, NO_PIECE));
-			}
-		}
-	}
 
 }
 void generateBishopMoves(const Position& pos, std::vector<Move>& moves)
 {
-	int index_piece = (pos.isWhiteMove) ? WHITE_BISHOP : BLACK_BISHOP;
-	uint8_t friendly = pos.isWhiteMove ? WHITE_ALL : BLACK_ALL;
-	uint8_t oponnent = pos.isWhiteMove ? BLACK_ALL : WHITE_ALL;
-	int diagonal[4] = { 9,-9,7,-7 };//prawo góra | lewo dó³ | lewo góra | prawo dó³
-	for (int i = 0; i < 64; i++) {
-		if (pos.bitBoard[index_piece] & (1ULL << i)) {//jak jest goniec to zrobi
-			for (int dir = 0; dir < 4; dir++) {//kazdy skoks po kolei
-			int to = i;//pozycja startowa by robic skosy
-				while (1){//obsluga danego skosku
-
-					int col = to % 8;
-					if ((dir == 0 || dir == 3) && col == 7) break;
-					if ((dir == 1 || dir == 2) && col == 0) break;
-					
-					to += diagonal[dir];
-					if (to < 0 || to > 63) break;
-
-
-					if (pos.bitBoard[friendly] & (1ULL << to))break; //blokuje jakiœ 
-
-					if (pos.bitBoard[oponnent] & (1ULL << to)) { //jakiego piona zbije ten ruch i przez to nie moze iœæ dalej
-						uint8_t piece = pos.piece_on_square(to);
-						moves.push_back(Move(i, to, index_piece, piece, NO_PIECE));
-						break;
-					}
-					moves.push_back(Move(i, to, index_piece, NO_PIECE, NO_PIECE));
-				}
-			}
-		}
-	}
 }
 void generateRookMoves(const Position& pos, std::vector<Move>& moves)
 {
-	int index_piece = (pos.isWhiteMove) ? WHITE_ROOK : BLACK_ROOK;
-	uint8_t friendly = pos.isWhiteMove ? WHITE_ALL : BLACK_ALL;
-	uint8_t oponnent = pos.isWhiteMove ? BLACK_ALL : WHITE_ALL;
-	int diagonal[4] = { 8,-8,1,-1 };//góra | dó³ | prawo | lewo
 
-	for (int i = 0; i < 64; i++) {
-		if (pos.bitBoard[index_piece] & (1ULL << i)) {//jak jest wie¿a to zrobi
-			for (int dir = 0; dir < 4; dir++) {//kazdy kierunek po kolei
-				int to = i;//pozycja startowa by robic kierunku
-				while (1) {//obsluga danego kierunku
-					int col = to % 8;
-					if (dir == 2 && col == 7) break;
-					if (dir == 3 && col == 0) break;
-
-					to += diagonal[dir];
-					if (to < 0 || to > 63) break;
-
-
-					if (pos.bitBoard[friendly] & (1ULL << to))break; //blokuje jakiœ 
-
-					if (pos.bitBoard[oponnent] & (1ULL << to)) { //jakiego piona zbije ten ruch i przez to nie moze iœæ dalej
-						uint8_t piece = pos.piece_on_square(to);
-						moves.push_back(Move(i, to, index_piece, piece, NO_PIECE));
-						break;
-					}
-					moves.push_back(Move(i, to, index_piece, NO_PIECE, NO_PIECE));
-				}
-
-			}
-		}
-	}
 }
 void generateQueenMoves(const Position& pos, std::vector<Move>& moves)
 {
-	int index_piece = (pos.isWhiteMove) ? WHITE_QUEEN : BLACK_QUEEN;
-	uint8_t friendly = pos.isWhiteMove ? WHITE_ALL : BLACK_ALL;
-	uint8_t oponnent = pos.isWhiteMove ? BLACK_ALL : WHITE_ALL;
-	int diagonal[8] = { 8,-8,1,-1 ,9,-9,7,-7 };//góra | dó³ | prawo | lewo  || goniec
-	
-	for (int i = 0; i < 64; i++) {
-		if (pos.bitBoard[index_piece] & (1ULL << i)) {//jak jest
-			for (int dir = 0; dir < 8; dir++) {
-				int to = i;//pozycja startowa
-				while (1) {//obsluga danego skosku
-					int col = to % 8;
-
-					if (dir <= 3){
-						if (dir == 3 && col == 0) break;
-						if (dir == 2 && col == 7) break;
-					}
-					else {
-						if ((dir == 4 || dir == 7) && col == 7) break;
-						if ((dir == 5 || dir == 6) && col == 0) break;
-					}
-
-					to += diagonal[dir];
-					if (to < 0 || to > 63) break;
-
-					if (pos.bitBoard[friendly] & (1ULL << to))break; //blokuje jakiœ 
-
-					if (pos.bitBoard[oponnent] & (1ULL << to)) { //jakiego piona zbije ten ruch i przez to nie moze iœæ dalej
-						uint8_t piece = pos.piece_on_square(to);
-						moves.push_back(Move(i, to, index_piece, piece, NO_PIECE));
-						break;
-					}
-					moves.push_back(Move(i, to, index_piece, NO_PIECE, NO_PIECE));
-				}
-			}
-		}
-	}
-
 }
 void generateKingMoves(const Position& pos, std::vector<Move>& moves)
 {
-	uint8_t index_piece = (pos.isWhiteMove) ? WHITE_KING : BLACK_KING;
-	uint8_t friendly = pos.isWhiteMove ? WHITE_ALL : BLACK_ALL;
-	uint8_t oponnent = pos.isWhiteMove ? BLACK_ALL : WHITE_ALL;
-
-	for (int i = 0; i < 64; i++) {
-		if (pos.bitBoard[index_piece] & (1ULL << i)) {
-
-			for (const int jump : kingAttacks[i]) { //patrze na jakie pola moze sie ruszyc skoczek
-				if (pos.bitBoard[friendly] & (1ULL << jump))continue; //jesli jest tam ten sam kolor to nie ma co
-				uint8_t piece = NO_PIECE;
-				if (pos.bitBoard[oponnent] & (1ULL << jump)) { //jakiego piona zbije ten ruch
-					piece = pos.piece_on_square(jump);
-				}
-				moves.push_back(Move(i, jump, index_piece, piece, NO_PIECE));
-			}
-		}
-
-		//
-		//	ROSZADA
-		//
-	}
-
 }
 
 

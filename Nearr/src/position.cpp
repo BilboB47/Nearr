@@ -67,7 +67,7 @@ void Position::make_move(const Move& move){
     //usun zbit¹ figure z bitboard koloru i bierki
     if (move.captured != NO_PIECE){
         bitBoard[move.captured] &= ~(1ULL << move.to);
-        bitBoard[(isWhiteMove) ? BLACK_ALL : WHITE_ALL] |= (1ULL << move.to); //usuwa z koloru zbitego
+        bitBoard[(isWhiteMove) ? BLACK_ALL : WHITE_ALL] &= ~(1ULL << move.to); //usuwa z koloru zbitego
     }
 
     //promocja pionka na dame
