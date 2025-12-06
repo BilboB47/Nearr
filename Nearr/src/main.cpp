@@ -151,4 +151,6 @@ int main() {
 
     initRookMagics();
     run_speed_comparison();
+
+    cout << sizeof(RookAttackTable);
 }
