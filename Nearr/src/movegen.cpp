@@ -63,6 +63,12 @@ void generate_blocker_patterns(uint64_t mask, int num_bits, std::vector<uint64_t
 	delete[] relevant_squares;
 }
 
+
+//===============================================================================================================
+//--------------------------------GENEROWANIE PSEUDORUCHÓW FIGUR---------------------------------------------------------------------------------------------- 
+//===============================================================================================================
+
+
 //====================================WIE¯A=========================================================================
 uint64_t RookMasks[64]{};//blokerów dla danego pola | B
 uint64_t RookMagicNumbers[64]{};//magiczna liczba dla danego pola  | M
@@ -213,8 +219,27 @@ uint64_t get_rook_attacks(int square, uint64_t board) {
 	//co pod jest pod nim
 	return RookAttackTable[final_index];
 }
-void generateRookMoves(const Position& pos, std::vector<Move>& moves)
-{
+void generateRookMoves(const Position& pos, std::vector<Move>& moves) {
+	uint64_t all = pos.getAllPieces();
+	uint64_t friendly = pos.getAllFriendlyPieces();
+
+	uint8_t piece = (pos.isWhiteMove) ? WHITE_ROOK : BLACK_ROOK;
+	uint64_t rooks = pos.bitBoard[piece];
+
+	while (rooks) { //liczy dla danego goñca
+		int index_rook = pop_lsb(&rooks);//okreœla jego pole i usuwa jest puli
+
+		uint64_t moves_to = get_rook_attacks(index_rook, all);
+		moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+
+		while (moves_to) {
+			int index_move = pop_lsb(&moves_to);
+
+			uint8_t captured = pos.piece_on_square(index_move);
+			moves.emplace_back(Move(index_rook, index_move, piece, captured));
+		}
+	}
+
 
 }
 
@@ -373,7 +398,6 @@ uint64_t get_bishop_attacks(int square, uint64_t board) {
 void generateBishopMoves(const Position& pos, std::vector<Move>& moves) {
 	
 	uint64_t all = pos.getAllPieces();
-	uint64_t enemy = pos.getAllEnemyPieces();
 	uint64_t friendly = pos.getAllFriendlyPieces();
 	
 	uint8_t piece = (pos.isWhiteMove) ? WHITE_BISHOP : BLACK_BISHOP;
@@ -420,13 +444,26 @@ void initKnightAttacks()
 
 }
 
-void generateKnightMoves(const Position& pos, std::vector<Move>& moves)
-{
-	uint64_t friendly = pos.bitBoard[pos.isWhiteMove ? WHITE_ALL : BLACK_ALL];
-	uint64_t enemy = pos.bitBoard[pos.isWhiteMove ? BLACK_ALL : WHITE_ALL];
-	uint64_t knight = pos.bitBoard[pos.isWhiteMove ? WHITE_KNIGHT : BLACK_KNIGHT];
+void generateKnightMoves(const Position& pos, std::vector<Move>& moves) {
+	uint64_t all = pos.getAllPieces();
+	uint64_t friendly = pos.getAllFriendlyPieces();
 
+	uint8_t piece = (pos.isWhiteMove) ? WHITE_KNIGHT : BLACK_KNIGHT;
+	uint64_t knight = pos.bitBoard[piece];
 
+	while (knight) { //liczy dla danego goñca
+		int index_knight = pop_lsb(&knight);//okreœla jego pole i usuwa jest puli
+
+		uint64_t moves_to = knightAttacks[index_knight];
+		moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+
+		while (moves_to) {
+			int index_move = pop_lsb(&moves_to);
+
+			uint8_t captured = pos.piece_on_square(index_move);
+			moves.emplace_back(Move(index_knight, index_move, piece, captured));
+		}
+	}
 }
 
 //====================================KRÓL=============================================================
@@ -454,8 +491,29 @@ void initKingAttacks()
 		}
 	}
 }//wypisuje tablice legalnych ruchów dla króla w wybranej jego pozycji
-void generateKingMoves(const Position& pos, std::vector<Move>& moves)
-{
+void generateKingMoves(const Position& pos, std::vector<Move>& moves) {
+	uint64_t all = pos.getAllPieces();
+	uint64_t friendly = pos.getAllFriendlyPieces();
+
+	uint8_t piece = (pos.isWhiteMove) ? WHITE_KING : BLACK_KING;
+	uint64_t king = pos.bitBoard[piece];
+
+	while (king) { //liczy dla danego goñca
+		int index_king = pop_lsb(&king);//okreœla jego pole i usuwa jest puli
+
+		uint64_t moves_to = kingAttacks[index_king];
+		moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+
+		while (moves_to) {
+			int index_move = pop_lsb(&moves_to);
+
+			uint8_t captured = pos.piece_on_square(index_move);
+			moves.emplace_back(Move(index_king, index_move, piece, captured));
+		}
+	}
+
+	//=================================IMPLEMENTACJA ROSZADY=============================================
+	//czy s¹ castling rights oraz czy pola pomiedzy wieza a krolem s¹ wolne 
 }
 
 //====================================PION=============================================================
@@ -527,11 +585,29 @@ void generatePawnMoves(const Position& pos, std::vector<Move>& moves)
 uint64_t get_queen_attacks(int square, uint64_t board) {
 	return get_bishop_attacks(square, board) | get_rook_attacks(square, board);
 }
-void generateQueenMoves(const Position& pos, std::vector<Move>& moves)
-{
+void generateQueenMoves(const Position& pos, std::vector<Move>& moves) {
+	uint64_t all = pos.getAllPieces();
+	uint64_t friendly = pos.getAllFriendlyPieces();
+
+	uint8_t piece = (pos.isWhiteMove) ? WHITE_QUEEN : BLACK_QUEEN;
+	uint64_t quenns = pos.bitBoard[piece];
+
+	while (quenns) { //liczy dla danego goñca
+		int index_queen = pop_lsb(&quenns);//okreœla jego pole i usuwa jest puli
+
+		uint64_t moves_to = get_queen_attacks(index_queen, all);
+		moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+
+		while (moves_to) {
+			int index_move = pop_lsb(&moves_to);
+
+			uint8_t captured = pos.piece_on_square(index_move);
+			moves.emplace_back(Move(index_queen, index_move, piece, captured));
+		}
+	}
 }
 
-
+//===================================================================================================
 
 void initAttackTables()
 {

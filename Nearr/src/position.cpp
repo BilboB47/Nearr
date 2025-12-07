@@ -74,6 +74,7 @@ void Position::make_move(const Move& move){
 
     //promocja pionka na dame
     
+
     //uint8_t castlingRights;
     //uint8_t enPassantSquare; 
     
