@@ -8,8 +8,8 @@
 
 
 //====================================FUNKCJE BITOWE=============================================================
-inline int pop_lsb(uint64_t* bitboard);
-inline int count_set_bits(uint64_t bb);
+inline int pop_lsb(uint64_t* bitboard); //zwraca najznaczy bit
+inline int count_set_bits(uint64_t bb); //zwraca ilosc bitów w bb
 
 //====================================GENEROWANIE LICZB LOSOWYCH=============================================================
 uint64_t random_uint64(std::mt19937_64& generator, std::uniform_int_distribution<uint64_t>& dystrybucja);
@@ -17,6 +17,12 @@ uint64_t generate_filtered_magic_candidate(std::mt19937_64& generator, std::unif
 
 //====================================GENEROWANIE WARIANTÓW=============================================================
 void generate_blocker_patterns(uint64_t mask, int num_bits, std::vector<uint64_t>& patterns);
+
+
+
+
+
+
 
 //====================================WIE¯A=========================================================================
 extern uint64_t RookMasks[64];
@@ -56,17 +62,20 @@ void generateKnightMoves(const Position& pos, std::vector<Move>& moves);
 
 //====================================KRÓL=============================================================
 extern uint64_t kingAttacks[64];
-void initKingAttacks();
+void initKingAttacks();		
 void generateKingMoves(const Position& pos, std::vector<Move>& moves);
 
-
 //====================================PION=============================================================
+extern uint64_t pawnAttacks[2][64];
+extern uint64_t pawnMoves[2][64];
+void initPawnAttacks();
+void initPawnMoves();
+void initPawnTables();
 void generatePawnMoves(const Position& pos, std::vector<Move>& moves);
 
 
-
-
 //====================================HETMAN=============================================================
+uint64_t get_queen_attacks(int square, uint64_t board);
 void generateQueenMoves(const Position& pos, std::vector<Move>& moves);
 
 

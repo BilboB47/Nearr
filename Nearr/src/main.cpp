@@ -65,8 +65,6 @@ uint64_t get_rook_attacks_iterative(int square, uint64_t blockers) {
     }
     return moves;
 }
-
-
 void run_speed_comparison() {
     // ⚠️ MUSISZ MIEĆ TĘ FUNKCJĘ WYWOŁANĄ RAZ PRZED TESTEM!
     // initRookMagics(); 
@@ -136,21 +134,77 @@ void run_speed_comparison() {
     std::cout << "==================================================\n";
 }
 
+#define NUM_RUNS 10000 
+
+void testBishopMoves() {
+    Position pozycja = Position();
+    // FEN z białym Gońcem na f4, strona aktywna: Białe
+    pozycja.set_position("r3qrk1/4bppp/p1N1pn2/1p6/5B2/2P5/PP3PPP/R2QR1K1", true);
+
+    // Użyjemy tymczasowego wektora ruchów wewnątrz pętli.
+    std::vector<Move> moves;
+
+    // --- START POMIARU CZASU GENEROWANIA RUCHÓW (10000x) ---
+    auto start_gen = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < NUM_RUNS; ++i) {
+        // Ważne: Wyczyść wektor za każdym razem, aby mierzyć tylko czas generowania
+        moves.clear();
+        generateBishopMoves(pozycja, moves);
+    }
+
+    // STOP POMIARU CZASU
+    auto stop_gen = std::chrono::high_resolution_clock::now();
+    // ----------------------------------------------------
+
+    // Obliczanie czasu i weryfikacja (wykonywana na ostatnim przebiegu)
+
+    // Weryfikacja
+    std::cout << "Test generateBishopMoves (Wf4):\n";
+    std::cout << "Oczekiwana liczba ruchów: 10\n";
+    std::cout << "Wygenerowana liczba ruchów (ostatni przebieg): " << moves.size() << "\n";
+
+    if (moves.size() != 10) {
+        std::cout << "Weryfikacja rozmiaru: FAILED\n";
+        return;
+    }
+    std::cout << "Weryfikacja rozmiaru: PASSED\n";
+
+    // Obliczenie całkowitego i średniego czasu
+    long long duration_total = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_gen - start_gen).count();
+    double duration_per_run = (double)duration_total / NUM_RUNS;
+
+    // Wypisujemy wynik w nanosekundach, ponieważ czas jest bardzo mały
+    std::cout << "Calkowity czas generowania (" << NUM_RUNS << "x): " << duration_total << " nanosekund (ns)\n";
+    std::cout << "ŚREDNI CZAS NA JEDNO WYWOŁANIE: " << duration_per_run << " nanosekund (ns)\n";
+
+
+    // Wypisujemy ruchy z ostatniego przebiegu
+    std::cout << "Wygenerowane ruchy (przyklad):\n";
+    for (const auto& move : moves) {
+        std::cout << "Move: " << squareToString(move.from) << " -> " << squareToString(move.to) << "\n";
+    }
+}
+
+
 int main() {
-	//initKnightAttacks();
 	//initKingAttacks();
+	//initKnightAttacks();
 
 	//Position pozycja = Position();
 	//pozycja.set_position("r3qrk1/4bppp/p1N1pn2/1p6/5B2/2P5/PP3PPP/R2QR1K1",true);
 	////pozycja.set_start_position();
+    initBishopMagics();
+    testBishopMoves();
+  
 
 	//char board[8][8];
 	//ToArray(pozycja, board);
 	//printBoard(board);
 	//cout << endl;
 
-    initRookMagics();
-    run_speed_comparison();
+    /*initRookMagics();
+    run_speed_comparison();*/
 
-    cout << sizeof(RookAttackTable);
+    
 }

@@ -20,7 +20,7 @@ enum Square : uint8_t {
     A8, B8, C8, D8, E8, F8, G8, H8
 };
 
-enum Color { WHITE, BLACK };
+enum Color { WHITE, BLACK };    
 
  //56 57 58 59 60 61 62 63
  //48 49 50 51 52 53 54 55

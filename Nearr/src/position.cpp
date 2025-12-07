@@ -1,5 +1,9 @@
 #include "position.hpp"
 
+
+
+
+//===============================USTAWIANIE POZYCJI==================================================
 void Position::set_start_position() {
     bitBoard[0] = 0x000000000000FF00ULL; // white pawns
     bitBoard[1] = 0x0000000000000042ULL; // white knights
@@ -24,7 +28,6 @@ void Position::set_start_position() {
     enPassantSquare = 0;      // brak
     moveNumber = 1;           // pierwszy ruch
 }
-
 void Position::set_position(std::string s, bool isWhite)
 {
     isWhiteMove = isWhite;
@@ -51,7 +54,6 @@ void Position::set_position(std::string s, bool isWhite)
     bitBoard[13] = bitBoard[6] | bitBoard[7] | bitBoard[8] | bitBoard[9] | bitBoard[10] | bitBoard[11];
     //rnbqkbnr / pppppppp / 8 / 8 / 8 / 8 / PPPPPPPP / RNBQKBNR
 }
-
 void Position::make_move(const Move& move){
 
     if (move.piece == NO_PIECE)return;
@@ -81,8 +83,23 @@ void Position::make_move(const Move& move){
     isWhiteMove = !isWhiteMove;
 }
 
+
+
+
+//===================ZBIERANIE INFORMACJI NA TEMAT PLANSZY==============================================================
+uint64_t Position::getAllPieces() const{
+    return bitBoard[WHITE_ALL] | bitBoard[BLACK_ALL];
+}
+uint64_t Position::getAllFriendlyPieces() const {
+    return (isWhiteMove) ? bitBoard[WHITE_ALL] : bitBoard[BLACK_ALL];
+}
+uint64_t Position::getAllEnemyPieces() const {
+    return (isWhiteMove) ? bitBoard[BLACK_ALL] : bitBoard[WHITE_ALL];
+}
 uint8_t Position::piece_on_square(int sq) const
-{
+{   
+    if ((getAllPieces() & (1ULL << sq)) == (0ULL)) return NO_PIECE;
+
     for (int i = 0; i < 12; i++) {
         if (bitBoard[i] & (1ULL << sq))return i;//i - to index danej figury 
     }

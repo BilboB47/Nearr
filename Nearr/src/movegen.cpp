@@ -6,6 +6,7 @@ inline int pop_lsb(uint64_t* bitboard)
 {
 	unsigned long int index;
 	if (_BitScanForward64(&index, *bitboard)){
+		*bitboard &= *bitboard - 1; //usuwa te nie znaczace czyli 11100 -> 11000 czyli ,za 1 lsb da 0
 		return (int)index;
 	}
 	return -1;
@@ -194,6 +195,7 @@ void initRookMagics() {
 
 	}
 }
+
 uint64_t get_rook_attacks(int square, uint64_t board) {
 
 	//co blokuje wie¿e na tym polu
@@ -267,7 +269,91 @@ uint64_t get_bishop_attacks_slow(int square, uint64_t blockers) {
 
 	return moves;
 };
-void initBishopMagics(){};
+void initBishopMagics(){
+		initBishopMasks();
+
+		int segment_start = 0;
+		for (int i = 0; i < 64; i++) { //wyliczanie segmentów
+			BishopOffsets[i] = segment_start;
+
+			//jaki rozmiar bedzie mial segment
+			int num_bits = count_set_bits(BishopMasks[i]);
+			int num_patterns = (1ULL) << num_bits;
+
+			BishopShifts[i] = 64 - num_bits;
+
+			//o ile dalej bedzie w takim razie kolejny
+			segment_start += num_patterns;
+		}
+
+		//RookAttackTable[ROOK_ATTACK_TABLE_SIZE]  czy dynamicznie alkowaæ rozmiar?
+
+		std::random_device rd;
+		std::mt19937_64 gen(rd());
+		std::uniform_int_distribution<uint64_t> distrib;
+
+		for (int i = 0; i < 64; i++) {
+			//wszystkie mo¿liwe ustawienia bloków
+			std::vector<uint64_t> patterns;
+			generate_blocker_patterns(BishopMasks[i], count_set_bits(BishopMasks[i]), patterns); //B
+
+			std::vector<uint64_t> attacks; // A
+			// Ataki dla ka¿dego ukladu bloków 
+			for (const auto& blocker_key : patterns) {
+				attacks.emplace_back(get_bishop_attacks_slow(i, blocker_key));
+			}
+
+			uint64_t magic_candidate;
+			int R = count_set_bits(BishopMasks[i]); // R
+			int shift = BishopShifts[i];            // S
+			int num_patterns = patterns.size();
+
+			std::vector<uint64_t> used_attacks(num_patterns, 0ULL); //sprawdzanie kolizji
+
+			bool collison;
+			do {
+				std::fill(used_attacks.begin(), used_attacks.end(), 0ULL);
+				collison = false;
+				magic_candidate = generate_filtered_magic_candidate(gen, distrib);
+
+				for (int j = 0; j < num_patterns; j++) {
+
+					uint64_t blocker = patterns[j];
+					uint64_t atack_value = attacks[j];
+					//WZÓR index = (B * M) >> S
+					uint64_t hash_index = (blocker * magic_candidate) >> shift;
+
+					//sprawdzanie kolizji
+					if (used_attacks[hash_index] == (0ULL)) {
+						used_attacks[hash_index] = atack_value;
+					}
+					else if (used_attacks[hash_index] != atack_value) {
+						// Jest zajête i wartoœæ jest RÓ¯NA - to jest PRAWDZIWA kolizja!
+						collison = true;
+						break;
+					}
+				}
+
+
+			} while (collison);
+
+
+
+
+			BishopMagicNumbers[i] = magic_candidate;
+			uint64_t offset = BishopOffsets[i];
+
+			for (int j = 0; j < num_patterns; ++j) {
+				uint64_t blocker = patterns[j];
+
+				uint64_t final_hash_index = (blocker * magic_candidate) >> shift;
+
+				BishopAttackTable[offset + final_hash_index] = used_attacks[final_hash_index];
+			}
+
+		}
+	};
+
 uint64_t get_bishop_attacks(int square, uint64_t board) {
 	//co blokuje goñca na tym polu
 	uint64_t blockers = board & BishopMasks[square];
@@ -284,11 +370,33 @@ uint64_t get_bishop_attacks(int square, uint64_t board) {
 	//co pod jest pod nim
 	return BishopAttackTable[final_index];
 };
-void generateBishopMoves(const Position& pos, std::vector<Move>& moves) {};
+void generateBishopMoves(const Position& pos, std::vector<Move>& moves) {
+	
+	uint64_t all = pos.getAllPieces();
+	uint64_t enemy = pos.getAllEnemyPieces();
+	uint64_t friendly = pos.getAllFriendlyPieces();
+	
+	uint8_t piece = (pos.isWhiteMove) ? WHITE_BISHOP : BLACK_BISHOP;
+	uint64_t bishops = pos.bitBoard[piece];
+
+	while (bishops){ //liczy dla danego goñca
+		int index_bishop = pop_lsb(&bishops);//okreœla jego pole i usuwa jest puli
+		
+		uint64_t moves_to = get_bishop_attacks(index_bishop, all);
+		moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+
+		while (moves_to) {
+			int index_move = pop_lsb(&moves_to);
+
+			uint8_t captured = pos.piece_on_square(index_move);
+			moves.emplace_back(Move(index_bishop,index_move,piece, captured));
+		}
+	}
+
+};
 
 //====================================SKOCZEK=============================================================
 uint64_t knightAttacks[64]{};
-
 void initKnightAttacks()
 {	
 	int jumps[8][2] = { //jaki ruch moze byæ wykonany L
@@ -309,7 +417,9 @@ void initKnightAttacks()
 			}
 		}
 	}
+
 }
+
 void generateKnightMoves(const Position& pos, std::vector<Move>& moves)
 {
 	uint64_t friendly = pos.bitBoard[pos.isWhiteMove ? WHITE_ALL : BLACK_ALL];
@@ -349,23 +459,87 @@ void generateKingMoves(const Position& pos, std::vector<Move>& moves)
 }
 
 //====================================PION=============================================================
+uint64_t pawnAttacks[2][64]{};
+void initPawnAttacks(){
+	std::fill(&pawnAttacks[0][0], &pawnAttacks[0][0] + 2 * 64, 0ULL);
+	const uint64_t A_FILE = 0x0101010101010101ULL; // Kolumna A
+	const uint64_t H_FILE = 0x8080808080808080ULL; // Kolumna H
+
+	//WHITE
+	for (int i = 0; i <= 55; i++) {//nie biore ostatniej lini bo jak sie na niej jest to juz nie ma co bic
+		uint64_t start_square = (1ULL << i);
+		//zamiast start_square&A_FILE mo¿na i%8 != 0 (ale operacje % s¹ bardzo kosztowne jednak init sie robi tylko raz na poczatku) 
+		if (!(start_square&A_FILE)) { //nie jest na lewej krawêdzi planszy 
+			pawnAttacks[WHITE][i] |= start_square << 7;
+		}
+		if (!(start_square & H_FILE)) { //nie jest na prawej krawêdzi planszy 
+			pawnAttacks[WHITE][i] |= start_square << 9;
+		}
+	}
+	
+	//BLACK
+	for (int i = 8; i < 64; i++) {
+		uint64_t start_square = (1ULL << i);
+		
+		if (!(start_square & A_FILE)) { //nie jest na lewej krawêdzi planszy 
+			pawnAttacks[BLACK][i] |= start_square >> 9;
+		}
+		if (!(start_square & H_FILE)) { //nie jest na prawej krawêdzi planszy 
+			pawnAttacks[BLACK][i] |= start_square >> 7;
+		}
+	}
+
+}
+
+uint64_t pawnMoves[2][64]{};
+void initPawnMoves() {
+	std::fill(&pawnMoves[0][0], &pawnMoves[0][0] + 2 * 64, 0ULL);
+	//WHITE
+	const uint64_t WHITE_START = 0x000000000000FF00ULL;
+	for (int i = 0; i < 64; i++){
+		uint64_t start_square = (1ULL << i);
+
+		if (i <= 55)pawnMoves[WHITE][i] = start_square << 8;
+		if (start_square & WHITE_START)pawnMoves[WHITE][i] |= start_square << 16;
+	}
+
+	//BLACK
+	const uint64_t BLACK_START = 0x00FF000000000000;
+	for (int i = 0; i < 64; i++) {
+		uint64_t start_square = (1ULL << i);
+
+		if (i >= 8)pawnMoves[BLACK][i] = start_square >> 8;
+		if (start_square & BLACK_START)pawnMoves[BLACK][i] |= start_square >> 16;
+	}
+}
+
+void initPawnTables() {
+	initPawnAttacks();
+	initPawnMoves();
+}
+
 void generatePawnMoves(const Position& pos, std::vector<Move>& moves)
 {
 }
 
 
 //====================================HETMAN=============================================================
+uint64_t get_queen_attacks(int square, uint64_t board) {
+	return get_bishop_attacks(square, board) | get_rook_attacks(square, board);
+}
 void generateQueenMoves(const Position& pos, std::vector<Move>& moves)
 {
 }
 
 
 
-
 void initAttackTables()
 {
+	initPawnTables();
 	initKingAttacks();
 	initKnightAttacks();
+	initBishopMagics();
+	initRookMagics();
 }
 std::vector<Move> generateMoves(const Position& pos)
 {
