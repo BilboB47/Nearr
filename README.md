@@ -1,6 +1,6 @@
 # Nearr - Silnik Szachowy C++
 
-Kompaktowy, nowoczesny silnik szachowy, zaimplementowany w C++ z wykorzystaniem techniki Bitboards (tablice bitowe) dla optymalnej wydajności w manipulacji stanem planszy.
+Kompaktowy, silnik szachowy, zaimplementowany w C++ z wykorzystaniem techniki Bitboards (tablice bitowe) dla optymalnej wydajności w manipulacji stanem planszy.
 
 ---
 
@@ -12,8 +12,6 @@ Projekt znajduje się w fazie **implementacji mechanik podstawowych**. Pełna ob
 
 * **Język:** C++
 * **Architektura Planszy:** Bitboards (64-bitowe liczby całkowite)
-* **Kompilator:** [GCC/Clang - dodaj swój]
-* **System Build:** [CMake/Make - dodaj swój]
 
 ## 🛠️ Zaimplementowane Mechaniki
 
