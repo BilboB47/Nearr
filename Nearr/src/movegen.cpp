@@ -514,6 +514,10 @@ void generateKingMoves(const Position& pos, std::vector<Move>& moves) {
 
 	//=================================IMPLEMENTACJA ROSZADY=============================================
 	//czy s¹ castling rights oraz czy pola pomiedzy wieza a krolem s¹ wolne 
+
+
+
+
 }
 
 //====================================PION=============================================================
@@ -576,8 +580,28 @@ void initPawnTables() {
 	initPawnMoves();
 }
 
-void generatePawnMoves(const Position& pos, std::vector<Move>& moves)
-{
+void generatePawnMoves(const Position& pos, std::vector<Move>& moves) {
+	uint64_t all = pos.getAllPieces();
+	uint64_t friendly = pos.getAllFriendlyPieces();
+
+	uint8_t piece = (pos.isWhiteMove) ? WHITE_PAWN : BLACK_PAWN;
+	uint64_t pawn = pos.bitBoard[piece];
+	uint8_t index_table = (pos.isWhiteMove) ? 0 : 1;
+
+	while (pawn) { //liczy dla danego goñca
+		int index_pawn = pop_lsb(&pawn);//okreœla jego pole i usuwa jest puli
+
+		uint64_t moves_to = pawnAttacks[index_table][index_pawn];
+		moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+
+		while (moves_to) {
+			int index_move = pop_lsb(&moves_to);
+
+			uint8_t captured = pos.piece_on_square(index_move);
+			moves.emplace_back(Move(index_pawn, index_move, piece, captured));
+		}
+	}
+
 }
 
 
