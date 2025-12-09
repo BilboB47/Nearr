@@ -25,6 +25,11 @@
     <ClCompile Include="src\position.cpp" />
     <ClCompile Include="src\search.cpp" />
     <ClCompile Include="src\ui_console.cpp" />
+    <ClCompile Include="tests\test_fen_parsing.cpp" />
+    <ClCompile Include="tests\test_main.cpp" />
+    <ClCompile Include="tests\test_move_execution.cpp" />
+    <ClCompile Include="tests\test_move_generation.cpp" />
+    <ClCompile Include="tests\test_position_state.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\defs.hpp" />

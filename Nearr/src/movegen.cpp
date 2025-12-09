@@ -11,6 +11,14 @@ inline int pop_lsb(uint64_t* bitboard)
 	}
 	return -1;
 }
+inline int last_lsb(uint64_t* bitboard)
+{
+	unsigned long int index;
+	if (_BitScanForward64(&index, *bitboard)) {
+		return (int)index;
+	}
+	return -1;
+}
 int count_set_bits(uint64_t bb) {
 	return (int)__popcnt64(bb);
 }
@@ -61,6 +69,88 @@ void generate_blocker_patterns(uint64_t mask, int num_bits, std::vector<uint64_t
 	}
 
 	delete[] relevant_squares;
+}
+
+//===================================SPRAWDZANIE CZY POLE JEST ATAKOWANE====================================================
+bool is_square_attacked(const Position& pos, int square, Color attack_by){
+	if (is_pawn_attacked(pos, square, attack_by))return true;
+	if (is_knight_attacked(pos, square, attack_by))return true;
+	if (is_king_attacked(pos, square, attack_by))return true;
+	if (is_bishop_or_queen_attacked(pos, square, attack_by))return true;
+	if (is_rook_or_queen_attacked(pos, square, attack_by))return true;
+
+	return false;
+}
+bool is_in_check(const Position& pos) {//sprawdza czy ten kto robi ruch otrzymuje szacha
+	
+	uint8_t piece = (pos.isWhiteMove) ?  WHITE_KING : BLACK_KING;
+
+	Color attacking_color = (pos.isWhiteMove) ? BLACK : WHITE;
+
+	uint64_t king_bb = pos.bitBoard[piece];
+	int square = last_lsb(&king_bb);
+
+	return is_square_attacked(pos, square, attacking_color);
+}
+
+bool is_pawn_attacked(const Position& pos, int square, Color attack_by) {
+	
+	//atakuj¹cy
+	uint8_t attacking_piece = (attack_by==WHITE) ? WHITE_PAWN : BLACK_PAWN; 
+	uint64_t attacking_pawn = pos.bitBoard[attacking_piece];
+
+	//atakowany
+	uint8_t index_table = (attack_by == WHITE) ? 1 : 0;
+
+	//odwrocenie ataku
+	uint64_t moves_to = pawnAttacks[index_table][square];
+	
+	return (attacking_pawn & moves_to) != 0;
+}
+bool is_king_attacked(const Position& pos, int square, Color attack_by) {
+	//atakuj¹cy
+	uint8_t attacking_piece = (attack_by == WHITE) ? WHITE_KING : BLACK_KING;
+	uint64_t attacking_king = pos.bitBoard[attacking_piece];
+
+	//odwrocenie ataku
+	uint64_t moves_to = kingAttacks[square];
+
+	return (attacking_king & moves_to) != 0;
+}
+bool is_knight_attacked(const Position& pos, int square, Color attack_by) {
+	//atakuj¹cy
+	uint8_t attacking_piece = (attack_by == WHITE) ? WHITE_KNIGHT : BLACK_KNIGHT;
+	uint64_t attacking_knight = pos.bitBoard[attacking_piece];
+
+	//odwrocenie ataku
+	uint64_t moves_to = knightAttacks[square];
+
+	return (attacking_knight & moves_to) != 0;
+}
+bool is_bishop_or_queen_attacked(const Position& pos, int square, Color attack_by) {
+	
+	//atakuj¹cy
+	uint8_t attacking_bishop = (attack_by == WHITE) ? WHITE_BISHOP : BLACK_BISHOP;
+	uint8_t attacking_queen = (attack_by == WHITE) ? WHITE_QUEEN : BLACK_QUEEN;
+	uint64_t attacking_board = pos.bitBoard[attacking_bishop] | pos.bitBoard[attacking_queen];
+
+	//odwrocenie ataku	
+	uint64_t all = pos.getAllPieces();
+	uint64_t moves_to = get_bishop_attacks(square, all);
+
+	return (attacking_board & moves_to) != 0;
+}
+bool is_rook_or_queen_attacked(const Position& pos, int square, Color attack_by){
+	//atakuj¹cy
+	uint8_t attacking_rook = (attack_by == WHITE) ? WHITE_ROOK : BLACK_ROOK;
+	uint8_t attacking_queen = (attack_by == WHITE) ? WHITE_QUEEN : BLACK_QUEEN;
+	uint64_t attacking_board = pos.bitBoard[attacking_rook] | pos.bitBoard[attacking_queen];
+
+	//odwrocenie ataku	
+	uint64_t all = pos.getAllPieces();
+	uint64_t moves_to = get_rook_attacks(square, all);
+
+	return (attacking_board & moves_to) != 0;
 }
 
 
@@ -216,7 +306,7 @@ uint64_t get_rook_attacks(int square, uint64_t board) {
 	uint64_t offset = RookOffsets[square];
 	uint64_t final_index = offset + hash_index;
 
-	//co pod jest pod nim
+	//gdzie mozna isc bitboard
 	return RookAttackTable[final_index];
 }
 void generateRookMoves(const Position& pos, std::vector<Move>& moves) {
@@ -510,13 +600,24 @@ void generateKingMoves(const Position& pos, std::vector<Move>& moves) {
 			uint8_t captured = pos.piece_on_square(index_move);
 			moves.emplace_back(Move(index_king, index_move, piece, captured));
 		}
+
+		//=================================IMPLEMENTACJA ROSZADY=============================================
+		//czy s¹ castling rights oraz czy pola pomiedzy wieza a krolem s¹ wolne 
+		if (pos.isWhiteMove) {
+			if ((pos.castlingRights & WK) && !(all&(F1|G1)) &&
+				!is_square_attacked(pos,E1,false) && 
+				!is_square_attacked(pos, F1, false)&& 
+				!is_square_attacked(pos, G1, false)) {
+				moves.emplace_back(Move(index_king,G1,piece));
+			}
+			if (pos.castlingRights & WQ) {
+
+			}
+		}
+		else {
+
+		}
 	}
-
-	//=================================IMPLEMENTACJA ROSZADY=============================================
-	//czy s¹ castling rights oraz czy pola pomiedzy wieza a krolem s¹ wolne 
-
-
-
 
 }
 
@@ -600,7 +701,12 @@ void generatePawnMoves(const Position& pos, std::vector<Move>& moves) {
 			uint8_t captured = pos.piece_on_square(index_move);
 			moves.emplace_back(Move(index_pawn, index_move, piece, captured));
 		}
+		//ruch 1 do przod
+		//ruch o 2 do przodu 
+		//promocja
+		//elpasant
 	}
+
 
 }
 

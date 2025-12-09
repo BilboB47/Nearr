@@ -10,6 +10,7 @@
 //====================================FUNKCJE BITOWE=============================================================
 inline int pop_lsb(uint64_t* bitboard); //zwraca najznaczy bit
 inline int count_set_bits(uint64_t bb); //zwraca ilosc bitów w bb
+inline int last_lsb(uint64_t* bitboard); //zwraca lsb
 
 //====================================GENEROWANIE LICZB LOSOWYCH=============================================================
 uint64_t random_uint64(std::mt19937_64& generator, std::uniform_int_distribution<uint64_t>& dystrybucja);
@@ -19,10 +20,16 @@ uint64_t generate_filtered_magic_candidate(std::mt19937_64& generator, std::unif
 void generate_blocker_patterns(uint64_t mask, int num_bits, std::vector<uint64_t>& patterns);
 
 
+//===================================SPRAWDZANIE CZY POLE JEST ATAKOWANE====================================================
 
+bool is_square_attacked(const Position& pos, int square, Color attack_by);
+bool is_in_check(const Position& pos);
 
-
-
+bool is_pawn_attacked(const Position& pos, int square, Color attack_by);
+bool is_knight_attacked(const Position& pos, int square, Color attack_by);
+bool is_king_attacked(const Position& pos, int square, Color attack_by);
+bool is_bishop_or_queen_attacked(const Position& pos, int square, Color attack_by);
+bool is_rook_or_queen_attacked(const Position& pos, int square, Color attack_by);
 
 //====================================WIE¯A=========================================================================
 extern uint64_t RookMasks[64];

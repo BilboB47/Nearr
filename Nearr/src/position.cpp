@@ -306,7 +306,6 @@ void Position::make_move(const Move& move){
 
 
 
-
 //===================ZBIERANIE INFORMACJI NA TEMAT PLANSZY==============================================================
 uint64_t Position::getAllPieces() const{
     return bitBoard[WHITE_ALL] | bitBoard[BLACK_ALL];
