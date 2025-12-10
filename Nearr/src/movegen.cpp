@@ -11,7 +11,7 @@ inline int pop_lsb(uint64_t* bitboard)
 	}
 	return -1;
 }
-inline int last_lsb(uint64_t* bitboard)
+inline int get_lsb(uint64_t* bitboard)
 {
 	unsigned long int index;
 	if (_BitScanForward64(&index, *bitboard)) {
@@ -88,7 +88,7 @@ bool is_in_check(const Position& pos) {//sprawdza czy ten kto robi ruch otrzymuj
 	Color attacking_color = (pos.isWhiteMove) ? BLACK : WHITE;
 
 	uint64_t king_bb = pos.bitBoard[piece];
-	int square = last_lsb(&king_bb);
+	int square = get_lsb(&king_bb);
 
 	return is_square_attacked(pos, square, attacking_color);
 }
@@ -580,7 +580,57 @@ void initKingAttacks()
 			}
 		}
 	}
-}//wypisuje tablice legalnych ruchów dla króla w wybranej jego pozycji
+}
+void generateCastlingMoves(const Position& pos, std::vector<Move>& moves)
+{
+	if (is_in_check(pos))return;
+		
+	uint64_t all = pos.bitBoard[BLACK_ALL] | pos.bitBoard[WHITE_ALL];
+		//roszada dla bia³ych
+		const Color ENEMY_COLOR = (pos.isWhiteMove) ? BLACK : WHITE;
+		if (pos.isWhiteMove) {
+			//krótka
+			uint64_t F1_G1_BB = ((1ULL) << F1) | ((1ULL) << G1);
+			if ((pos.castlingRights & WK) && !(all & F1_G1_BB) &&
+				!is_square_attacked(pos, F1, ENEMY_COLOR) &&
+				!is_square_attacked(pos, G1, ENEMY_COLOR)) {
+
+				moves.emplace_back(Move(E1, G1, WHITE_KING, NO_PIECE, FLAG_CASTLE_KINGSIDE));
+			}
+
+			//d³uga
+			uint64_t B1_C1_D1_BB = ((1ULL) << B1) | ((1ULL) << C1) | ((1ULL) << D1);
+			if ((pos.castlingRights & WQ) && !(all & B1_C1_D1_BB) &&
+				!is_square_attacked(pos, D1, ENEMY_COLOR) &&
+				!is_square_attacked(pos, C1, ENEMY_COLOR)) {
+
+				moves.emplace_back(Move(E1, C1, WHITE_KING, NO_PIECE, FLAG_CASTLE_QUEENSIDE));
+			}
+		}
+		//czarna
+		else {
+
+			// Krótka 
+			uint64_t F8_G8_BB = ((1ULL) << F8) | ((1ULL) << G8);
+			if ((pos.castlingRights & BK) && !(all & F8_G8_BB) &&
+				!is_square_attacked(pos, F8, ENEMY_COLOR) &&
+				!is_square_attacked(pos, G8, ENEMY_COLOR)) {
+
+				moves.emplace_back(Move(E8, G8, BLACK_KING, NO_PIECE, FLAG_CASTLE_KINGSIDE));
+			}
+
+			// D³uga 
+			uint64_t B8_C8_D8_BB = ((1ULL) << B8) | ((1ULL) << C8) | ((1ULL) << D8);
+			if ((pos.castlingRights & BQ) && !(all & B8_C8_D8_BB) &&
+				!is_square_attacked(pos, D8, ENEMY_COLOR) &&
+				!is_square_attacked(pos, C8, ENEMY_COLOR)) {
+
+				moves.emplace_back(Move(E8, C8, BLACK_KING, NO_PIECE, FLAG_CASTLE_QUEENSIDE));
+			}
+		}
+
+}
+
 void generateKingMoves(const Position& pos, std::vector<Move>& moves) {
 	uint64_t all = pos.getAllPieces();
 	uint64_t friendly = pos.getAllFriendlyPieces();
@@ -588,36 +638,19 @@ void generateKingMoves(const Position& pos, std::vector<Move>& moves) {
 	uint8_t piece = (pos.isWhiteMove) ? WHITE_KING : BLACK_KING;
 	uint64_t king = pos.bitBoard[piece];
 
-	while (king) { //liczy dla danego goñca
-		int index_king = pop_lsb(&king);//okreœla jego pole i usuwa jest puli
+	int index_king = get_lsb(&king);//okreœla jego pole i usuwa jest puli
 
-		uint64_t moves_to = kingAttacks[index_king];
-		moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+	uint64_t moves_to = kingAttacks[index_king];
+	moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
 
-		while (moves_to) {
-			int index_move = pop_lsb(&moves_to);
+	while (moves_to) {
+		int index_move = pop_lsb(&moves_to);
 
-			uint8_t captured = pos.piece_on_square(index_move);
-			moves.emplace_back(Move(index_king, index_move, piece, captured));
-		}
-
-		//=================================IMPLEMENTACJA ROSZADY=============================================
-		//czy s¹ castling rights oraz czy pola pomiedzy wieza a krolem s¹ wolne 
-		if (pos.isWhiteMove) {
-			if ((pos.castlingRights & WK) && !(all&(F1|G1)) &&
-				!is_square_attacked(pos,E1,false) && 
-				!is_square_attacked(pos, F1, false)&& 
-				!is_square_attacked(pos, G1, false)) {
-				moves.emplace_back(Move(index_king,G1,piece));
-			}
-			if (pos.castlingRights & WQ) {
-
-			}
-		}
-		else {
-
-		}
+		uint8_t captured = pos.piece_on_square(index_move);
+		moves.emplace_back(Move(index_king, index_move, piece, captured));
 	}
+
+	generateCastlingMoves(pos,moves);
 
 }
 
@@ -654,16 +687,20 @@ void initPawnAttacks(){
 
 }
 
-uint64_t pawnMoves[2][64]{};
+uint64_t pawnSingleMoves[2][64]{};
+uint64_t pawnDoubleMoves[2][64]{};
 void initPawnMoves() {
-	std::fill(&pawnMoves[0][0], &pawnMoves[0][0] + 2 * 64, 0ULL);
+
+	std::fill(&pawnSingleMoves[0][0], &pawnSingleMoves[0][0] + 2 * 64, 0ULL);
+	std::fill(&pawnDoubleMoves[0][0], &pawnDoubleMoves[0][0] + 2 * 64, 0ULL);
+
 	//WHITE
 	const uint64_t WHITE_START = 0x000000000000FF00ULL;
 	for (int i = 0; i < 64; i++){
 		uint64_t start_square = (1ULL << i);
 
-		if (i <= 55)pawnMoves[WHITE][i] = start_square << 8;
-		if (start_square & WHITE_START)pawnMoves[WHITE][i] |= start_square << 16;
+		if (i <= 55)pawnSingleMoves[WHITE][i] = start_square << 8;
+		if (start_square & WHITE_START)pawnDoubleMoves[WHITE][i] |= start_square << 16;
 	}
 
 	//BLACK
@@ -671,8 +708,8 @@ void initPawnMoves() {
 	for (int i = 0; i < 64; i++) {
 		uint64_t start_square = (1ULL << i);
 
-		if (i >= 8)pawnMoves[BLACK][i] = start_square >> 8;
-		if (start_square & BLACK_START)pawnMoves[BLACK][i] |= start_square >> 16;
+		if (i >= 8)pawnSingleMoves[BLACK][i] = start_square >> 8;
+		if (start_square & BLACK_START)pawnDoubleMoves[BLACK][i] |= start_square >> 16;
 	}
 }
 
@@ -681,34 +718,78 @@ void initPawnTables() {
 	initPawnMoves();
 }
 
-void generatePawnMoves(const Position& pos, std::vector<Move>& moves) {
+void generatePawnMoves(const Position& pos, std::vector<Move>& moves){
 	uint64_t all = pos.getAllPieces();
 	uint64_t friendly = pos.getAllFriendlyPieces();
+	uint64_t enemy = pos.getAllEnemyPieces();
 
 	uint8_t piece = (pos.isWhiteMove) ? WHITE_PAWN : BLACK_PAWN;
-	uint64_t pawn = pos.bitBoard[piece];
-	uint8_t index_table = (pos.isWhiteMove) ? 0 : 1;
+	uint8_t index_table = (pos.isWhiteMove) ? WHITE : BLACK;
+	uint64_t pawns = pos.bitBoard[piece];
 
-	while (pawn) { //liczy dla danego goñca
-		int index_pawn = pop_lsb(&pawn);//okreœla jego pole i usuwa jest puli
+	uint64_t RANK_1 = 0x00000000000000FFULL;
+	uint64_t RANK_8 = 0xFF00000000000000ULL;
+	const uint64_t PROMOTION_RANK = pos.isWhiteMove ? RANK_8 : RANK_1;
 
-		uint64_t moves_to = pawnAttacks[index_table][index_pawn];
-		moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+	while (pawns) { //pêtla ob³ugi ka¿dego piona
+		int index_pawn = pop_lsb(&pawns);
 
-		while (moves_to) {
-			int index_move = pop_lsb(&moves_to);
+		//=========================BICIE=======================================
+		uint64_t capture_targets = pawnAttacks[index_table][index_pawn];
+		capture_targets &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+		capture_targets &= enemy;
 
+		while (capture_targets) {
+			int index_move = pop_lsb(&capture_targets);
+
+			uint64_t target_square_bb = 1ULL << index_move;
 			uint8_t captured = pos.piece_on_square(index_move);
-			moves.emplace_back(Move(index_pawn, index_move, piece, captured));
+			
+			if (target_square_bb & PROMOTION_RANK){
+				moves.emplace_back(Move(index_pawn, index_move, piece, captured,FLAG_PROMOTION, PROMOTION_BISHOP));
+				moves.emplace_back(Move(index_pawn, index_move, piece, captured,FLAG_PROMOTION, PROMOTION_KNIGHT));
+				moves.emplace_back(Move(index_pawn, index_move, piece, captured,FLAG_PROMOTION, PROMOTION_QUEEN));
+				moves.emplace_back(Move(index_pawn, index_move, piece, captured,FLAG_PROMOTION, PROMOTION_ROOK));
+			}else {
+				moves.emplace_back(Move(index_pawn, index_move, piece, captured));
+			}
 		}
-		//ruch 1 do przod
-		//ruch o 2 do przodu 
-		//promocja
-		//elpasant
+
+		//==========================ruch do przodu======================================
+		uint64_t single_push = pawnSingleMoves[index_table][index_pawn];
+		uint64_t double_push = pawnDoubleMoves[index_table][index_pawn];
+
+		uint64_t push_one = single_push & ~all;
+
+		if (push_one) {
+
+			int index_move = get_lsb(&push_one);
+			moves.emplace_back(Move(index_pawn, index_move, piece));
+
+			uint64_t push_two = double_push & ~all;
+			if (push_two) {
+				index_move = get_lsb(&push_two);
+				moves.emplace_back(Move(index_pawn, index_move, piece,NO_PIECE,FLAG_PAWN_DOUBLE_PUSH));
+			}
+		}
+		
+		//==========================bicie enPassant======================================
+		if (pos.enPassantSquare != NO_SQUARE){
+			int ep_index = pos.enPassantSquare;
+			uint64_t ep_target_bb = 1ULL << ep_index;
+
+			uint64_t ep_capture_targets = pawnAttacks[index_table][index_pawn];
+
+			if (ep_capture_targets & ep_target_bb){
+				uint8_t captured_pawn = pos.isWhiteMove ? BLACK_PAWN : WHITE_PAWN; //make_move to te¿ sprawdza
+				moves.emplace_back(Move(index_pawn, ep_index, piece, captured_pawn, FLAG_EN_PASSANT));
+			}
+		}
 	}
 
-
 }
+
+
 
 
 //====================================HETMAN=============================================================

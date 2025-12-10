@@ -10,7 +10,7 @@
 //====================================FUNKCJE BITOWE=============================================================
 inline int pop_lsb(uint64_t* bitboard); //zwraca najznaczy bit
 inline int count_set_bits(uint64_t bb); //zwraca ilosc bitów w bb
-inline int last_lsb(uint64_t* bitboard); //zwraca lsb
+inline int get_lsb(uint64_t* bitboard); //zwraca lsb
 
 //====================================GENEROWANIE LICZB LOSOWYCH=============================================================
 uint64_t random_uint64(std::mt19937_64& generator, std::uniform_int_distribution<uint64_t>& dystrybucja);
@@ -70,11 +70,14 @@ void generateKnightMoves(const Position& pos, std::vector<Move>& moves);
 //====================================KRÓL=============================================================
 extern uint64_t kingAttacks[64];
 void initKingAttacks();		
+void generateCastlingMoves(const Position& pos, std::vector<Move>& moves);
 void generateKingMoves(const Position& pos, std::vector<Move>& moves);
 
 //====================================PION=============================================================
 extern uint64_t pawnAttacks[2][64];
-extern uint64_t pawnMoves[2][64];
+extern uint64_t pawnSingleMoves[2][64];
+extern uint64_t pawnDoubleMoves[2][64];
+
 void initPawnAttacks();
 void initPawnMoves();
 void initPawnTables();

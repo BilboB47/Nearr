@@ -238,26 +238,92 @@ void test_lose_rights_capture_rook() {
     }
 }
 
+
+void run_single_test(std::string fen, int expected_moves, std::string test_name) {
+    Position pos;
+
+    // 1. Ustawienie pozycji za pomocą Twojej funkcji
+    pos.set_position_FEN(fen);
+    pos.print_board();
+
+    //// 2. Generowanie ruchów
+    std::vector<Move> moves = generateMoves(pos);
+
+    // 3. Weryfikacja
+    std::cout << "--- TEST: " << test_name << " ---\n";
+    std::cout << "FEN: " << fen << "\n";
+
+    if (moves.size() == expected_moves) {
+        std::cout << "STATUS: [ OK ]\n";
+        std::cout << "Liczba ruchów: " << moves.size() << "\n";
+    }
+    else {
+        std::cout << "STATUS: [ BŁĄD ]\n";
+        std::cout << "Oczekiwano: " << expected_moves << "\n";
+        std::cout << "Otrzymano:  " << moves.size() << "\n";
+
+      // Opcjonalnie: Wypisz różnicę, co pomoże w debugowaniu
+      int diff = (int)moves.size() - expected_moves;
+        std::cout << "Różnica: " << (diff > 0 ? "+" : "") << diff << "\n";
+    }
+    std::cout << "--------------------------------------------------\n";
+}
+void run_all_tests() {
+    std::cout << "==================================================\n";
+    std::cout << "       TESTY GENERATORA RUCHÓW (Pseudo-Legal)\n";
+    std::cout << "==================================================\n";
+
+    // TEST 1: Pozycja Startowa
+    // Jeśli masz zaimplementowane TYLKO Pionki, wynik będzie 16.
+    // Jeśli masz Pionki + Skoczki, wynik będzie 20.
+    run_single_test(
+        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -",
+        0,
+        "Pozycja Startowa"
+    );
+
+}
+
+void benchmark(Position& pos)
+{
+    const int iterations = 100000;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    volatile int sink = 0;
+
+    for (int i = 0; i < iterations; i++)
+    {
+        std::vector<Move> moves = generateMoves(pos);
+        sink += moves.size();   // zapobiega optymalizacji
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+
+    double avg_ns = double(duration) / iterations;
+
+    std::cout << "Średni czas jednego generateMoves: "
+        << avg_ns << " ns\n";
+}
+
 int main() {
-	//initKingAttacks();
-	//initKnightAttacks();
+
 
 	//Position pozycja = Position();
 	//pozycja.set_position("r3qrk1/4bppp/p1N1pn2/1p6/5B2/2P5/PP3PPP/R2QR1K1",true);
-	////pozycja.set_start_position();  
+    initAttackTables();
 
-	//char board[8][8];
-	//ToArray(pozycja, board);
-	//printBoard(board);
-	//cout << endl;
+    Position pos;
 
-    //initAttackTables();
-    
-    //test_en_passant_move();
-    //test_promotion();
-    //test_castling_kingside();
-    //test_lose_rights_capture_rook();
-    //test_lose_rights_king_move();
+    // 1. Ustawienie pozycji za pomocą Twojej funkcji
+    pos.set_position_FEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+    pos.print_board();
+
+    //// 2. Generowanie ruchów
+    benchmark(pos);
+
 
     return 0;
 

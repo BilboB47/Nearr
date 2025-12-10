@@ -263,7 +263,7 @@ void Position::make_move(const Move& move){
         make_simple_move(move.piece, from_bb,to_bb,moving_color_all);
 
         //promocja piona
-        if (move.promotion!=PROMOTION_NONE){
+        if (move.flags & FLAG_PROMOTION){
             promote_pawn(move, to_bb);
         }
 

@@ -8,7 +8,7 @@ struct Move
 	uint32_t to : 6;			//0-63 <=> a1-h8
 	uint32_t piece : 4;		//ruch
 	uint32_t captured : 4;	//zbito 0-11 , 
-	uint32_t flags : 4; //flagi 
+	uint32_t flags : 5; //flagi 
 	uint32_t promotion : 4; //promocja na ....    
 
 	Move()
@@ -16,7 +16,7 @@ struct Move
 	}
 
 	Move(uint8_t from, uint8_t to, uint8_t piece,
-		uint8_t captured = NO_PIECE, uint8_t flags = 0, uint8_t promotion = 0)
+		uint8_t captured = NO_PIECE, uint8_t flags = FLAG_NONE, uint8_t promotion = PROMOTION_NONE)
 		: from(from), to(to), piece(piece), captured(captured), flags(flags), promotion(promotion){
 	}
 };

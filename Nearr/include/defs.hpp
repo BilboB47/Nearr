@@ -42,6 +42,8 @@ enum Flags : uint8_t {
     
     FLAG_CASTLE_KINGSIDE = 1 << 2,
     FLAG_CASTLE_QUEENSIDE = 1 << 3,
+
+    FLAG_PROMOTION = 1 << 4,
 };
 
 enum Promotion : uint8_t {
