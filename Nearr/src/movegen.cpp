@@ -2,22 +2,23 @@
 
 
 //====================================FUNKCJE BITOWE=============================================================
-inline int pop_lsb(uint64_t* bitboard)
+inline uint8_t pop_lsb(uint64_t* bitboard)
 {
-	unsigned long int index;
-	if (_BitScanForward64(&index, *bitboard)){
-		*bitboard &= *bitboard - 1; //usuwa te nie znaczace czyli 11100 -> 11000 czyli ,za 1 lsb da 0
-		return (int)index;
+	unsigned long index; 
+	if (_BitScanForward64(&index, *bitboard))
+	{
+		*bitboard &= *bitboard - 1; 
+		return static_cast<uint8_t>(index);
 	}
-	return -1;
+	return 01; 
 }
-inline int get_lsb(uint64_t* bitboard)
+inline uint8_t get_lsb(uint64_t* bitboard)
 {
-	unsigned long int index;
+	unsigned long index;  
 	if (_BitScanForward64(&index, *bitboard)) {
-		return (int)index;
+		return static_cast<uint8_t>(index);
 	}
-	return -1;
+	return 64;
 }
 int count_set_bits(uint64_t bb) {
 	return (int)__popcnt64(bb);
@@ -309,24 +310,24 @@ uint64_t get_rook_attacks(int square, uint64_t board) {
 	//gdzie mozna isc bitboard
 	return RookAttackTable[final_index];
 }
-void generateRookMoves(const Position& pos, std::vector<Move>& moves) {
+void generateRookMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
-	uint64_t friendly = pos.getAllFriendlyPieces();
+	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
 
 	uint8_t piece = (pos.isWhiteMove) ? WHITE_ROOK : BLACK_ROOK;
 	uint64_t rooks = pos.bitBoard[piece];
 
 	while (rooks) { //liczy dla danego goñca
-		int index_rook = pop_lsb(&rooks);//okreœla jego pole i usuwa jest puli
+		uint8_t index_rook = pop_lsb(&rooks);//okreœla jego pole i usuwa jest puli
 
 		uint64_t moves_to = get_rook_attacks(index_rook, all);
-		moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+		moves_to &= not_friendly; //odejmuje pozycje gdzie s¹ friendly figury
 
 		while (moves_to) {
-			int index_move = pop_lsb(&moves_to);
+			uint8_t index_move = pop_lsb(&moves_to);
 
 			uint8_t captured = pos.piece_on_square(index_move);
-			moves.emplace_back(Move(index_rook, index_move, piece, captured));
+			out[count++] = Move{ index_rook, index_move, piece, captured, FLAG_NONE, PROMOTION_NONE };
 		}
 	}
 
@@ -485,25 +486,25 @@ uint64_t get_bishop_attacks(int square, uint64_t board) {
 	//co pod jest pod nim
 	return BishopAttackTable[final_index];
 };
-void generateBishopMoves(const Position& pos, std::vector<Move>& moves) {
+void generateBishopMoves(const Position& pos, Move* out, int& count) {
 	
 	uint64_t all = pos.getAllPieces();
-	uint64_t friendly = pos.getAllFriendlyPieces();
+	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
 	
 	uint8_t piece = (pos.isWhiteMove) ? WHITE_BISHOP : BLACK_BISHOP;
 	uint64_t bishops = pos.bitBoard[piece];
 
 	while (bishops){ //liczy dla danego goñca
-		int index_bishop = pop_lsb(&bishops);//okreœla jego pole i usuwa jest puli
+		uint8_t index_bishop = pop_lsb(&bishops);//okreœla jego pole i usuwa jest puli
 		
 		uint64_t moves_to = get_bishop_attacks(index_bishop, all);
-		moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+		moves_to &= not_friendly; //odejmuje pozycje gdzie s¹ friendly figury
 
 		while (moves_to) {
-			int index_move = pop_lsb(&moves_to);
+			uint8_t index_move = pop_lsb(&moves_to);
 
 			uint8_t captured = pos.piece_on_square(index_move);
-			moves.emplace_back(Move(index_bishop,index_move,piece, captured));
+			out[count++] = Move{ index_bishop, index_move, piece, captured, FLAG_NONE, PROMOTION_NONE };
 		}
 	}
 
@@ -534,24 +535,24 @@ void initKnightAttacks()
 
 }
 
-void generateKnightMoves(const Position& pos, std::vector<Move>& moves) {
+void generateKnightMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
-	uint64_t friendly = pos.getAllFriendlyPieces();
+	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
 
 	uint8_t piece = (pos.isWhiteMove) ? WHITE_KNIGHT : BLACK_KNIGHT;
 	uint64_t knight = pos.bitBoard[piece];
 
 	while (knight) { //liczy dla danego goñca
-		int index_knight = pop_lsb(&knight);//okreœla jego pole i usuwa jest puli
+		uint8_t index_knight = pop_lsb(&knight);//okreœla jego pole i usuwa jest puli
 
 		uint64_t moves_to = knightAttacks[index_knight];
-		moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+		moves_to &= not_friendly; //odejmuje pozycje gdzie s¹ friendly figury
 
 		while (moves_to) {
-			int index_move = pop_lsb(&moves_to);
+			uint8_t index_move = pop_lsb(&moves_to);
 
 			uint8_t captured = pos.piece_on_square(index_move);
-			moves.emplace_back(Move(index_knight, index_move, piece, captured));
+			out[count++] = Move{ index_knight, index_move, piece, captured, FLAG_NONE, PROMOTION_NONE };
 		}
 	}
 }
@@ -581,76 +582,77 @@ void initKingAttacks()
 		}
 	}
 }
-void generateCastlingMoves(const Position& pos, std::vector<Move>& moves)
+
+void generateCastlingMoves(const Position& pos, Move* out, int& count)
 {
 	if (is_in_check(pos))return;
-		
+
 	uint64_t all = pos.bitBoard[BLACK_ALL] | pos.bitBoard[WHITE_ALL];
-		//roszada dla bia³ych
-		const Color ENEMY_COLOR = (pos.isWhiteMove) ? BLACK : WHITE;
-		if (pos.isWhiteMove) {
-			//krótka
-			uint64_t F1_G1_BB = ((1ULL) << F1) | ((1ULL) << G1);
-			if ((pos.castlingRights & WK) && !(all & F1_G1_BB) &&
-				!is_square_attacked(pos, F1, ENEMY_COLOR) &&
-				!is_square_attacked(pos, G1, ENEMY_COLOR)) {
+	//roszada dla bia³ych
+	const Color ENEMY_COLOR = (pos.isWhiteMove) ? BLACK : WHITE;
+	if (pos.isWhiteMove) {
+		//krótka
+		uint64_t F1_G1_BB = ((1ULL) << F1) | ((1ULL) << G1);
+		if ((pos.castlingRights & WK) && !(all & F1_G1_BB) &&
+			!is_square_attacked(pos, F1, ENEMY_COLOR) &&
+			!is_square_attacked(pos, G1, ENEMY_COLOR)) {
 
-				moves.emplace_back(Move(E1, G1, WHITE_KING, NO_PIECE, FLAG_CASTLE_KINGSIDE));
-			}
-
-			//d³uga
-			uint64_t B1_C1_D1_BB = ((1ULL) << B1) | ((1ULL) << C1) | ((1ULL) << D1);
-			if ((pos.castlingRights & WQ) && !(all & B1_C1_D1_BB) &&
-				!is_square_attacked(pos, D1, ENEMY_COLOR) &&
-				!is_square_attacked(pos, C1, ENEMY_COLOR)) {
-
-				moves.emplace_back(Move(E1, C1, WHITE_KING, NO_PIECE, FLAG_CASTLE_QUEENSIDE));
-			}
-		}
-		//czarna
-		else {
-
-			// Krótka 
-			uint64_t F8_G8_BB = ((1ULL) << F8) | ((1ULL) << G8);
-			if ((pos.castlingRights & BK) && !(all & F8_G8_BB) &&
-				!is_square_attacked(pos, F8, ENEMY_COLOR) &&
-				!is_square_attacked(pos, G8, ENEMY_COLOR)) {
-
-				moves.emplace_back(Move(E8, G8, BLACK_KING, NO_PIECE, FLAG_CASTLE_KINGSIDE));
-			}
-
-			// D³uga 
-			uint64_t B8_C8_D8_BB = ((1ULL) << B8) | ((1ULL) << C8) | ((1ULL) << D8);
-			if ((pos.castlingRights & BQ) && !(all & B8_C8_D8_BB) &&
-				!is_square_attacked(pos, D8, ENEMY_COLOR) &&
-				!is_square_attacked(pos, C8, ENEMY_COLOR)) {
-
-				moves.emplace_back(Move(E8, C8, BLACK_KING, NO_PIECE, FLAG_CASTLE_QUEENSIDE));
-			}
+			out[count++] = Move{ E1, G1, WHITE_KING, NO_PIECE, FLAG_CASTLE_KINGSIDE, PROMOTION_NONE };
 		}
 
+		//d³uga
+		uint64_t B1_C1_D1_BB = ((1ULL) << B1) | ((1ULL) << C1) | ((1ULL) << D1);
+		if ((pos.castlingRights & WQ) && !(all & B1_C1_D1_BB) &&
+			!is_square_attacked(pos, D1, ENEMY_COLOR) &&
+			!is_square_attacked(pos, C1, ENEMY_COLOR)) {
+
+			out[count++] = Move{ E1, C1, WHITE_KING, NO_PIECE, FLAG_CASTLE_QUEENSIDE, PROMOTION_NONE };
+
+		}
+	}
+	//czarna
+	else {
+
+		// Krótka 
+		uint64_t F8_G8_BB = ((1ULL) << F8) | ((1ULL) << G8);
+		if ((pos.castlingRights & BK) && !(all & F8_G8_BB) &&
+			!is_square_attacked(pos, F8, ENEMY_COLOR) &&
+			!is_square_attacked(pos, G8, ENEMY_COLOR)) {
+
+			out[count++] = Move{ E8,G8,BLACK_KING,NO_PIECE,FLAG_CASTLE_KINGSIDE,PROMOTION_NONE };
+		}
+
+		// D³uga 
+		uint64_t B8_C8_D8_BB = ((1ULL) << B8) | ((1ULL) << C8) | ((1ULL) << D8);
+		if ((pos.castlingRights & BQ) && !(all & B8_C8_D8_BB) &&
+			!is_square_attacked(pos, D8, ENEMY_COLOR) &&
+			!is_square_attacked(pos, C8, ENEMY_COLOR)) {
+
+			out[count++] = Move{ E8, C8, BLACK_KING, NO_PIECE, FLAG_CASTLE_QUEENSIDE, PROMOTION_NONE };
+		}
+
+	}
 }
-
-void generateKingMoves(const Position& pos, std::vector<Move>& moves) {
+void generateKingMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
 	uint64_t friendly = pos.getAllFriendlyPieces();
 
 	uint8_t piece = (pos.isWhiteMove) ? WHITE_KING : BLACK_KING;
 	uint64_t king = pos.bitBoard[piece];
 
-	int index_king = get_lsb(&king);//okreœla jego pole i usuwa jest puli
+	uint8_t index_king = get_lsb(&king);//okreœla jego pole i usuwa jest puli
 
 	uint64_t moves_to = kingAttacks[index_king];
 	moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
 
 	while (moves_to) {
-		int index_move = pop_lsb(&moves_to);
+		uint8_t index_move = pop_lsb(&moves_to);
 
 		uint8_t captured = pos.piece_on_square(index_move);
-		moves.emplace_back(Move(index_king, index_move, piece, captured));
+		out[count++] = Move{ index_king, index_move, piece, captured };
 	}
 
-	generateCastlingMoves(pos,moves);
+	generateCastlingMoves(pos,out,count);
 
 }
 
@@ -718,9 +720,9 @@ void initPawnTables() {
 	initPawnMoves();
 }
 
-void generatePawnMoves(const Position& pos, std::vector<Move>& moves){
+void generatePawnMoves(const Position& pos, Move* out, int& count){
 	uint64_t all = pos.getAllPieces();
-	uint64_t friendly = pos.getAllFriendlyPieces();
+	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
 	uint64_t enemy = pos.getAllEnemyPieces();
 
 	uint8_t piece = (pos.isWhiteMove) ? WHITE_PAWN : BLACK_PAWN;
@@ -732,26 +734,33 @@ void generatePawnMoves(const Position& pos, std::vector<Move>& moves){
 	const uint64_t PROMOTION_RANK = pos.isWhiteMove ? RANK_8 : RANK_1;
 
 	while (pawns) { //pêtla ob³ugi ka¿dego piona
-		int index_pawn = pop_lsb(&pawns);
+		uint8_t index_pawn = pop_lsb(&pawns);
 
 		//=========================BICIE=======================================
 		uint64_t capture_targets = pawnAttacks[index_table][index_pawn];
-		capture_targets &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+		capture_targets &= not_friendly; //odejmuje pozycje gdzie s¹ friendly figury
 		capture_targets &= enemy;
 
 		while (capture_targets) {
-			int index_move = pop_lsb(&capture_targets);
+			uint8_t index_move = pop_lsb(&capture_targets);
 
 			uint64_t target_square_bb = 1ULL << index_move;
 			uint8_t captured = pos.piece_on_square(index_move);
 			
 			if (target_square_bb & PROMOTION_RANK){
-				moves.emplace_back(Move(index_pawn, index_move, piece, captured,FLAG_PROMOTION, PROMOTION_BISHOP));
-				moves.emplace_back(Move(index_pawn, index_move, piece, captured,FLAG_PROMOTION, PROMOTION_KNIGHT));
-				moves.emplace_back(Move(index_pawn, index_move, piece, captured,FLAG_PROMOTION, PROMOTION_QUEEN));
-				moves.emplace_back(Move(index_pawn, index_move, piece, captured,FLAG_PROMOTION, PROMOTION_ROOK));
-			}else {
-				moves.emplace_back(Move(index_pawn, index_move, piece, captured));
+				out[count++] = Move{ index_pawn, index_move, piece, captured,
+					 FLAG_PROMOTION, PROMOTION_BISHOP };
+
+				out[count++] = Move{ index_pawn, index_move, piece, captured,
+									 FLAG_PROMOTION, PROMOTION_KNIGHT };
+
+				out[count++] = Move{ index_pawn, index_move, piece, captured,
+									 FLAG_PROMOTION, PROMOTION_QUEEN };
+
+				out[count++] = Move{ index_pawn, index_move, piece, captured,
+									 FLAG_PROMOTION, PROMOTION_ROOK };
+				}else {
+				out[count++] = Move{ index_pawn, index_move, piece, captured };
 			}
 		}
 
@@ -763,57 +772,54 @@ void generatePawnMoves(const Position& pos, std::vector<Move>& moves){
 
 		if (push_one) {
 
-			int index_move = get_lsb(&push_one);
-			moves.emplace_back(Move(index_pawn, index_move, piece));
+			uint8_t index_move = get_lsb(&push_one);
+			out[count++] = Move{ index_pawn, index_move, piece, NO_PIECE, FLAG_NONE, PROMOTION_NONE };
 
 			uint64_t push_two = double_push & ~all;
 			if (push_two) {
 				index_move = get_lsb(&push_two);
-				moves.emplace_back(Move(index_pawn, index_move, piece,NO_PIECE,FLAG_PAWN_DOUBLE_PUSH));
+				out[count++] = Move{ index_pawn, index_move, piece, NO_PIECE, FLAG_PAWN_DOUBLE_PUSH, PROMOTION_NONE };
 			}
 		}
 		
 		//==========================bicie enPassant======================================
 		if (pos.enPassantSquare != NO_SQUARE){
-			int ep_index = pos.enPassantSquare;
+			uint8_t ep_index = pos.enPassantSquare;
 			uint64_t ep_target_bb = 1ULL << ep_index;
 
 			uint64_t ep_capture_targets = pawnAttacks[index_table][index_pawn];
 
 			if (ep_capture_targets & ep_target_bb){
 				uint8_t captured_pawn = pos.isWhiteMove ? BLACK_PAWN : WHITE_PAWN; //make_move to te¿ sprawdza
-				moves.emplace_back(Move(index_pawn, ep_index, piece, captured_pawn, FLAG_EN_PASSANT));
+				out[count++] = Move{ index_pawn, ep_index, piece, captured_pawn, FLAG_EN_PASSANT, PROMOTION_NONE };
 			}
 		}
 	}
 
 }
 
-
-
-
 //====================================HETMAN=============================================================
 uint64_t get_queen_attacks(int square, uint64_t board) {
 	return get_bishop_attacks(square, board) | get_rook_attacks(square, board);
 }
-void generateQueenMoves(const Position& pos, std::vector<Move>& moves) {
+void generateQueenMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
-	uint64_t friendly = pos.getAllFriendlyPieces();
+	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
 
 	uint8_t piece = (pos.isWhiteMove) ? WHITE_QUEEN : BLACK_QUEEN;
 	uint64_t quenns = pos.bitBoard[piece];
 
 	while (quenns) { //liczy dla danego goñca
-		int index_queen = pop_lsb(&quenns);//okreœla jego pole i usuwa jest puli
+		uint8_t index_queen = pop_lsb(&quenns);//okreœla jego pole i usuwa jest puli
 
 		uint64_t moves_to = get_queen_attacks(index_queen, all);
-		moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+		moves_to &= not_friendly; //odejmuje pozycje gdzie s¹ friendly figury
 
 		while (moves_to) {
-			int index_move = pop_lsb(&moves_to);
+			uint8_t index_move = pop_lsb(&moves_to);
 
 			uint8_t captured = pos.piece_on_square(index_move);
-			moves.emplace_back(Move(index_queen, index_move, piece, captured));
+			out[count++] = Move{ index_queen, index_move, piece, captured, FLAG_NONE, PROMOTION_NONE };
 		}
 	}
 }
@@ -828,16 +834,19 @@ void initAttackTables()
 	initBishopMagics();
 	initRookMagics();
 }
-std::vector<Move> generateMoves(const Position& pos)
+
+int generateMoves(const Position& pos, Move* out)
 {
-	std::vector<Move> moves;
-	generatePawnMoves(pos,moves);
-	generateKnightMoves(pos, moves);
-	generateBishopMoves(pos, moves);
-	generateRookMoves(pos, moves);
-	generateQueenMoves(pos, moves);
-	generateKingMoves(pos, moves);
-	return moves;
+	int count = 0;
+
+	generatePawnMoves(pos, out, count); //159.195 ns
+	generateKnightMoves(pos, out, count); //158.12 ns
+	generateBishopMoves(pos, out, count); //232.153 ns
+	generateRookMoves(pos, out, count); //117.12 ns
+	generateQueenMoves(pos, out, count); //209.18 ns
+	generateKingMoves(pos, out, count); //160.811 ns
+
+	return count;
 }
 
 

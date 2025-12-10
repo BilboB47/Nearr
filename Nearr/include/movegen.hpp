@@ -8,9 +8,9 @@
 
 
 //====================================FUNKCJE BITOWE=============================================================
-inline int pop_lsb(uint64_t* bitboard); //zwraca najznaczy bit
+inline uint8_t pop_lsb(uint64_t* bitboard); //zwraca najznaczy bit
+inline uint8_t get_lsb(uint64_t* bitboard); //zwraca lsb
 inline int count_set_bits(uint64_t bb); //zwraca ilosc bitów w bb
-inline int get_lsb(uint64_t* bitboard); //zwraca lsb
 
 //====================================GENEROWANIE LICZB LOSOWYCH=============================================================
 uint64_t random_uint64(std::mt19937_64& generator, std::uniform_int_distribution<uint64_t>& dystrybucja);
@@ -44,7 +44,7 @@ void initRookMasks();
 uint64_t get_rook_attacks_slow(int square, uint64_t blockers);
 void initRookMagics();
 uint64_t get_rook_attacks(int square, uint64_t board);
-void generateRookMoves(const Position& pos, std::vector<Move>& moves);
+void generateRookMoves(const Position& pos, Move* out, int& count);
 
 
 //====================================GONIEC=========================================================================
@@ -59,19 +59,19 @@ void initBishopMasks();
 uint64_t get_bishop_attacks_slow(int square, uint64_t blockers);
 void initBishopMagics();
 uint64_t get_bishop_attacks(int square, uint64_t board);
-void generateBishopMoves(const Position& pos, std::vector<Move>& moves);
+void generateBishopMoves(const Position& pos,Move* out,int  &count);
 
 
 //====================================SKOCZEK=============================================================
 extern uint64_t knightAttacks[64];
 void initKnightAttacks();
-void generateKnightMoves(const Position& pos, std::vector<Move>& moves);
+void generateKnightMoves(const Position& pos, Move* out, int& count);
 
 //====================================KRÓL=============================================================
 extern uint64_t kingAttacks[64];
 void initKingAttacks();		
-void generateCastlingMoves(const Position& pos, std::vector<Move>& moves);
-void generateKingMoves(const Position& pos, std::vector<Move>& moves);
+void generateCastlingMoves(const Position& pos, Move* out, int& count);
+void generateKingMoves(const Position& pos, Move* out, int& count);
 
 //====================================PION=============================================================
 extern uint64_t pawnAttacks[2][64];
@@ -81,16 +81,16 @@ extern uint64_t pawnDoubleMoves[2][64];
 void initPawnAttacks();
 void initPawnMoves();
 void initPawnTables();
-void generatePawnMoves(const Position& pos, std::vector<Move>& moves);
+void generatePawnMoves(const Position& pos, Move* out, int& count);
 
 
 //====================================HETMAN=============================================================
 uint64_t get_queen_attacks(int square, uint64_t board);
-void generateQueenMoves(const Position& pos, std::vector<Move>& moves);
+void generateQueenMoves(const Position& pos, Move* out, int& count);
 
 
 void initAttackTables();
-std::vector<Move> generateMoves(const Position& pos);
+int generateMoves(const Position& pos, Move* out);
 
 
 
