@@ -148,7 +148,7 @@ void Position::set_position_FEN(std::string s) {
 
 
 //========================================ROBIENIE RUCHU===============================================================
-void Position::make_simple_move(uint8_t piece_type, uint64_t from_bb, uint64_t to_bb, uint8_t moving_color_all)
+void Position::make_simple_move(uint8_t piece_type, uint64_t from_bb, uint64_t to_bb, Piece moving_color_all)
 {
     // usun figure z starego pola
     this->bitBoard[piece_type] &= ~from_bb; // U¿ywamy piece_type (Wie¿a lub Król)
@@ -158,55 +158,63 @@ void Position::make_simple_move(uint8_t piece_type, uint64_t from_bb, uint64_t t
     this->bitBoard[piece_type] |= to_bb; // U¿ywamy piece_type (Wie¿a lub Król)
     this->bitBoard[moving_color_all] |= to_bb;
 }
-void Position::remove_captured_piece(uint8_t captured_piece, uint64_t captured_square_bb, uint8_t captured_color_all) {
+void Position::remove_captured_piece(uint8_t captured_piece, uint64_t captured_square_bb, Piece captured_color_all) {
     this->bitBoard[captured_piece] &= ~captured_square_bb;
     this->bitBoard[captured_color_all] &= ~captured_square_bb;
 }
 void Position::promote_pawn(const Move& move, uint64_t to_bb)
 {
     uint8_t promotion_to;
+    uint8_t pawn = (this->isWhiteMove) ? WHITE_PAWN : BLACK_PAWN;
 
-    if (move.promotion & PROMOTION_QUEEN) {
+    const uint8_t PROMOTION_KEY = move.flags & 0b0011; 
+
+    if (PROMOTION_KEY == 3) { // Q (Hetman)
         promotion_to = (isWhiteMove) ? WHITE_QUEEN : BLACK_QUEEN;
     }
-    else if (move.promotion & PROMOTION_KNIGHT) {
+    else if (PROMOTION_KEY == 0) { // N (Skoczek)
         promotion_to = (isWhiteMove) ? WHITE_KNIGHT : BLACK_KNIGHT;
     }
-    else if (move.promotion & PROMOTION_ROOK) {
+    else if (PROMOTION_KEY == 2) { // R (Wie¿a)
         promotion_to = (isWhiteMove) ? WHITE_ROOK : BLACK_ROOK;
     }
-    else if (move.promotion & PROMOTION_BISHOP) {
+    else if (PROMOTION_KEY == 1) { // B (Goniek)
         promotion_to = (isWhiteMove) ? WHITE_BISHOP : BLACK_BISHOP;
     }
     else {
         throw("MOVE WRONG PROMOTION");
+        return;
     }
 
-    this->bitBoard[move.piece] &= ~to_bb; //usun pion ktory jest promowany
+
+    this->bitBoard[pawn] &= ~to_bb; //usun pion ktory jest promowany
     this->bitBoard[promotion_to] |= to_bb; //dodaj now¹ figure
 }
 void Position::update_castling_rights(const Move& move)
-{
+{   
+    uint8_t moving_piece = this->piece_on_square(move.from);
+    uint8_t captured_piece = this->piece_on_square(move.to);
+
     //ruch krola
-    if (move.piece == WHITE_KING) this->castlingRights &= ~(WK | WQ);
-    if (move.piece == BLACK_KING) this->castlingRights &= ~(BK | BQ);
+    if (moving_piece == WHITE_KING) this->castlingRights &= ~(WK | WQ);
+    if (moving_piece == BLACK_KING) this->castlingRights &= ~(BK | BQ);
 
     //ruch wie¿y
-    if (move.piece == WHITE_ROOK) {
+    if (moving_piece == WHITE_ROOK) {
         if (move.from == A1) this->castlingRights &= ~WQ; 
         if (move.from == H1) this->castlingRights &= ~WK; 
     }
-    if (move.piece == BLACK_ROOK) {
+    if (moving_piece == BLACK_ROOK) {
         if (move.from == A8) this->castlingRights &= ~BQ; 
         if (move.from == H8) this->castlingRights &= ~BK; 
     }
 
     //zbicie wiezy
-    if (move.captured == WHITE_ROOK) {
+    if (captured_piece == WHITE_ROOK) {
         if (move.to == A1) this->castlingRights &= ~WQ; 
         if (move.to == H1) this->castlingRights &= ~WK; 
     }
-    if (move.captured == BLACK_ROOK) {
+    if (captured_piece == BLACK_ROOK) {
         if (move.to == A8) this->castlingRights &= ~BQ; 
         if (move.to == H8) this->castlingRights &= ~BK; 
     }
@@ -215,7 +223,7 @@ void Position::handle_castling_rook(const Move& move) {
     Square rook_from_sq, rook_to_sq;
     uint8_t rook_piece = isWhiteMove ? WHITE_ROOK : BLACK_ROOK;
 
-    if (move.flags & FLAG_CASTLE_KINGSIDE) {
+    if (move.flags == FLAG_CASTLE_KINGSIDE) {
         if (isWhiteMove) {
             rook_from_sq = H1;
             rook_to_sq = F1;
@@ -225,7 +233,7 @@ void Position::handle_castling_rook(const Move& move) {
             rook_to_sq = F8;
         }
     }
-    else if (move.flags & FLAG_CASTLE_QUEENSIDE) {
+    else if (move.flags == FLAG_CASTLE_QUEENSIDE) {
         if (isWhiteMove) {
             rook_from_sq = A1;
             rook_to_sq = D1;
@@ -238,15 +246,18 @@ void Position::handle_castling_rook(const Move& move) {
 
     uint64_t from_bb = 1ULL << rook_from_sq;
     uint64_t to_bb = 1ULL << rook_to_sq;
-    uint8_t moving_color_all = (isWhiteMove) ? WHITE_ALL : BLACK_ALL;
+    Piece moving_color_all = (isWhiteMove) ? WHITE_ALL : BLACK_ALL;
 
     make_simple_move(rook_piece, from_bb, to_bb, moving_color_all);
 }
 
 //zrobienie ruchu z uwzgledniem wszystkiego (bez sprawdzania leglnoœci ruchu)
 void Position::make_move(const Move& move){
+        
+        uint8_t moving_piece = this->piece_on_square(move.from);
+        uint8_t captured_piece = this->piece_on_square(move.to);
 
-        if (move.piece == NO_PIECE)return;
+        if (moving_piece == NO_PIECE)return;
 
         uint64_t from_bb = 1ULL << move.from;
         uint64_t to_bb = 1ULL << move.to;
@@ -257,18 +268,20 @@ void Position::make_move(const Move& move){
         this->enPassantSquare = NO_SQUARE;
 
         //bicie figury
-        if (move.captured != NO_PIECE && !(move.flags & FLAG_EN_PASSANT)){
-            remove_captured_piece(move.captured, to_bb, captured_color_all);
+        if (captured_piece != NO_PIECE && !(move.flags & FLAG_EN_PASSANT)){
+            remove_captured_piece(captured_piece, to_bb, captured_color_all);
         }
-        make_simple_move(move.piece, from_bb,to_bb,moving_color_all);
+        make_simple_move(moving_piece, from_bb,to_bb,moving_color_all);
 
         //promocja piona
-        if (move.flags & FLAG_PROMOTION){
+        const uint8_t PROMOTION_MASK = 0b1000; //bo wszystki flagi promocji maj¹ 1---
+
+        if (move.flags & PROMOTION_MASK){
             promote_pawn(move, to_bb);
         }
 
         //ustawienie pol enPassant
-        if (move.flags & FLAG_PAWN_DOUBLE_PUSH) {
+        if (move.flags == FLAG_PAWN_DOUBLE_PUSH) {
             if (isWhiteMove){
                 enPassantSquare = move.from+8;
             }else {
@@ -289,11 +302,12 @@ void Position::make_move(const Move& move){
         update_castling_rights(move);
 
         //wykonanie roszady
-        if (move.flags&(FLAG_CASTLE_KINGSIDE|FLAG_CASTLE_QUEENSIDE)){
+        if (move.flags == FLAG_CASTLE_KINGSIDE || move.flags == FLAG_CASTLE_QUEENSIDE){
             handle_castling_rook(move);
         }
+        
 
-        if (move.captured != NO_PIECE || move.piece == WHITE_PAWN || move.piece == BLACK_PAWN) {
+        if (captured_piece != NO_PIECE || moving_piece == WHITE_PAWN || moving_piece == BLACK_PAWN) {
             this->halfmoveClock = 0;
         }else {
             this->halfmoveClock++;

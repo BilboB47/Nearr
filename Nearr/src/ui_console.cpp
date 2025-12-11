@@ -82,19 +82,4 @@ std::string squareToString(int index) {
     return std::string() + fileChar + rankChar;
 }
 
-void printMoves(std::vector<Move>& moves)
-{
-    uint8_t from;		//0-63 <=> a1-h8
-    uint8_t to;			//0-63 <=> a1-h8
-    uint8_t piece;		//ruch
-    uint8_t captured;	//zbito 0-11 , 
-    uint8_t promotion;
-
-    for (const auto& move : moves){
-        cout << "Ruch: " << get_piece_from_number(move.piece) <<endl;
-        cout << "Z " << squareToString(move.from) << " do " << squareToString(move.to) <<endl;
-        if(move.captured!=NO_PIECE) cout << "Zbito: " << squareToString(move.captured) <<endl;
-        cout << "========================" << endl;
-    }
-}
 

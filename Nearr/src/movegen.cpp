@@ -314,8 +314,7 @@ void generateRookMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
 	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
 
-	uint8_t piece = (pos.isWhiteMove) ? WHITE_ROOK : BLACK_ROOK;
-	uint64_t rooks = pos.bitBoard[piece];
+	uint64_t rooks = (pos.isWhiteMove)? pos.bitBoard[WHITE_ROOK] : pos.bitBoard[BLACK_ROOK];
 
 	while (rooks) { //liczy dla danego goñca
 		uint8_t index_rook = pop_lsb(&rooks);//okreœla jego pole i usuwa jest puli
@@ -326,11 +325,9 @@ void generateRookMoves(const Position& pos, Move* out, int& count) {
 		while (moves_to) {
 			uint8_t index_move = pop_lsb(&moves_to);
 
-			uint8_t captured = pos.piece_on_square(index_move);
-			out[count++] = Move{ index_rook, index_move, piece, captured, FLAG_NONE, PROMOTION_NONE };
+			out[count++] = Move{ index_rook, index_move, FLAG_NORMAL};
 		}
 	}
-
 
 }
 
@@ -491,8 +488,7 @@ void generateBishopMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
 	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
 	
-	uint8_t piece = (pos.isWhiteMove) ? WHITE_BISHOP : BLACK_BISHOP;
-	uint64_t bishops = pos.bitBoard[piece];
+	uint64_t bishops = (pos.isWhiteMove) ? pos.bitBoard[WHITE_BISHOP] : pos.bitBoard[BLACK_BISHOP];
 
 	while (bishops){ //liczy dla danego goñca
 		uint8_t index_bishop = pop_lsb(&bishops);//okreœla jego pole i usuwa jest puli
@@ -503,8 +499,7 @@ void generateBishopMoves(const Position& pos, Move* out, int& count) {
 		while (moves_to) {
 			uint8_t index_move = pop_lsb(&moves_to);
 
-			uint8_t captured = pos.piece_on_square(index_move);
-			out[count++] = Move{ index_bishop, index_move, piece, captured, FLAG_NONE, PROMOTION_NONE };
+			out[count++] = Move{ index_bishop, index_move, FLAG_NORMAL };
 		}
 	}
 
@@ -539,8 +534,7 @@ void generateKnightMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
 	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
 
-	uint8_t piece = (pos.isWhiteMove) ? WHITE_KNIGHT : BLACK_KNIGHT;
-	uint64_t knight = pos.bitBoard[piece];
+	uint64_t knight = (pos.isWhiteMove) ? pos.bitBoard[WHITE_KNIGHT] : pos.bitBoard[BLACK_KNIGHT];
 
 	while (knight) { //liczy dla danego goñca
 		uint8_t index_knight = pop_lsb(&knight);//okreœla jego pole i usuwa jest puli
@@ -551,8 +545,7 @@ void generateKnightMoves(const Position& pos, Move* out, int& count) {
 		while (moves_to) {
 			uint8_t index_move = pop_lsb(&moves_to);
 
-			uint8_t captured = pos.piece_on_square(index_move);
-			out[count++] = Move{ index_knight, index_move, piece, captured, FLAG_NONE, PROMOTION_NONE };
+			out[count++] = Move{ index_knight, index_move, FLAG_NORMAL };
 		}
 	}
 }
@@ -593,21 +586,21 @@ void generateCastlingMoves(const Position& pos, Move* out, int& count)
 	if (pos.isWhiteMove) {
 		//krótka
 		uint64_t F1_G1_BB = ((1ULL) << F1) | ((1ULL) << G1);
+
 		if ((pos.castlingRights & WK) && !(all & F1_G1_BB) &&
 			!is_square_attacked(pos, F1, ENEMY_COLOR) &&
 			!is_square_attacked(pos, G1, ENEMY_COLOR)) {
 
-			out[count++] = Move{ E1, G1, WHITE_KING, NO_PIECE, FLAG_CASTLE_KINGSIDE, PROMOTION_NONE };
+			out[count++] = Move{ E1, G1,FLAG_CASTLE_KINGSIDE };
 		}
-
-		//d³uga
+			//d³uga
 		uint64_t B1_C1_D1_BB = ((1ULL) << B1) | ((1ULL) << C1) | ((1ULL) << D1);
+		
 		if ((pos.castlingRights & WQ) && !(all & B1_C1_D1_BB) &&
 			!is_square_attacked(pos, D1, ENEMY_COLOR) &&
 			!is_square_attacked(pos, C1, ENEMY_COLOR)) {
 
-			out[count++] = Move{ E1, C1, WHITE_KING, NO_PIECE, FLAG_CASTLE_QUEENSIDE, PROMOTION_NONE };
-
+			out[count++] = Move{ E1, C1,FLAG_CASTLE_QUEENSIDE };
 		}
 	}
 	//czarna
@@ -619,7 +612,7 @@ void generateCastlingMoves(const Position& pos, Move* out, int& count)
 			!is_square_attacked(pos, F8, ENEMY_COLOR) &&
 			!is_square_attacked(pos, G8, ENEMY_COLOR)) {
 
-			out[count++] = Move{ E8,G8,BLACK_KING,NO_PIECE,FLAG_CASTLE_KINGSIDE,PROMOTION_NONE };
+			out[count++] = Move{ E8,G8,FLAG_CASTLE_KINGSIDE };
 		}
 
 		// D³uga 
@@ -628,7 +621,7 @@ void generateCastlingMoves(const Position& pos, Move* out, int& count)
 			!is_square_attacked(pos, D8, ENEMY_COLOR) &&
 			!is_square_attacked(pos, C8, ENEMY_COLOR)) {
 
-			out[count++] = Move{ E8, C8, BLACK_KING, NO_PIECE, FLAG_CASTLE_QUEENSIDE, PROMOTION_NONE };
+			out[count++] = Move{ E8, C8,FLAG_CASTLE_QUEENSIDE };
 		}
 
 	}
@@ -637,19 +630,21 @@ void generateKingMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
 	uint64_t friendly = pos.getAllFriendlyPieces();
 
-	uint8_t piece = (pos.isWhiteMove) ? WHITE_KING : BLACK_KING;
-	uint64_t king = pos.bitBoard[piece];
+	uint64_t king = (pos.isWhiteMove) ? pos.bitBoard[WHITE_KING] : pos.bitBoard[BLACK_KING];
 
 	uint8_t index_king = get_lsb(&king);//okreœla jego pole i usuwa jest puli
 
 	uint64_t moves_to = kingAttacks[index_king];
 	moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
 
+	const Color ENEMY_COLOR = (pos.isWhiteMove) ? BLACK : WHITE;
+
 	while (moves_to) {
 		uint8_t index_move = pop_lsb(&moves_to);
 
-		uint8_t captured = pos.piece_on_square(index_move);
-		out[count++] = Move{ index_king, index_move, piece, captured };
+		if (is_square_attacked(pos, index_move, ENEMY_COLOR))continue;
+
+		out[count++] = Move{ index_king, index_move, FLAG_NORMAL};
 	}
 
 	generateCastlingMoves(pos,out,count);
@@ -722,12 +717,10 @@ void initPawnTables() {
 
 void generatePawnMoves(const Position& pos, Move* out, int& count){
 	uint64_t all = pos.getAllPieces();
-	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
 	uint64_t enemy = pos.getAllEnemyPieces();
 
-	uint8_t piece = (pos.isWhiteMove) ? WHITE_PAWN : BLACK_PAWN;
+	uint64_t pawns = (pos.isWhiteMove) ? pos.bitBoard[WHITE_PAWN] : pos.bitBoard[BLACK_PAWN];
 	uint8_t index_table = (pos.isWhiteMove) ? WHITE : BLACK;
-	uint64_t pawns = pos.bitBoard[piece];
 
 	uint64_t RANK_1 = 0x00000000000000FFULL;
 	uint64_t RANK_8 = 0xFF00000000000000ULL;
@@ -738,29 +731,20 @@ void generatePawnMoves(const Position& pos, Move* out, int& count){
 
 		//=========================BICIE=======================================
 		uint64_t capture_targets = pawnAttacks[index_table][index_pawn];
-		capture_targets &= not_friendly; //odejmuje pozycje gdzie s¹ friendly figury
 		capture_targets &= enemy;
 
 		while (capture_targets) {
 			uint8_t index_move = pop_lsb(&capture_targets);
 
 			uint64_t target_square_bb = 1ULL << index_move;
-			uint8_t captured = pos.piece_on_square(index_move);
 			
 			if (target_square_bb & PROMOTION_RANK){
-				out[count++] = Move{ index_pawn, index_move, piece, captured,
-					 FLAG_PROMOTION, PROMOTION_BISHOP };
-
-				out[count++] = Move{ index_pawn, index_move, piece, captured,
-									 FLAG_PROMOTION, PROMOTION_KNIGHT };
-
-				out[count++] = Move{ index_pawn, index_move, piece, captured,
-									 FLAG_PROMOTION, PROMOTION_QUEEN };
-
-				out[count++] = Move{ index_pawn, index_move, piece, captured,
-									 FLAG_PROMOTION, PROMOTION_ROOK };
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_CAPTURE_Q};
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_CAPTURE_R};
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_CAPTURE_B};
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_CAPTURE_N};
 				}else {
-				out[count++] = Move{ index_pawn, index_move, piece, captured };
+				out[count++] = Move{ index_pawn, index_move,FLAG_NORMAL};
 			}
 		}
 
@@ -769,19 +753,32 @@ void generatePawnMoves(const Position& pos, Move* out, int& count){
 		uint64_t double_push = pawnDoubleMoves[index_table][index_pawn];
 
 		uint64_t push_one = single_push & ~all;
-
+	
 		if (push_one) {
 
+			//==========================ruch o 1======================================
 			uint8_t index_move = get_lsb(&push_one);
-			out[count++] = Move{ index_pawn, index_move, piece, NO_PIECE, FLAG_NONE, PROMOTION_NONE };
+			uint64_t move_bb = (1ULL) << index_move;
+			
+			if (move_bb & PROMOTION_RANK) {
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_Q };
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_R };
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_B };
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_N };
+			}
+			else {
+				out[count++] = Move{ index_pawn, index_move,FLAG_NORMAL};
+			}
 
-			uint64_t push_two = double_push & ~all;
-			if (push_two) {
-				index_move = get_lsb(&push_two);
-				out[count++] = Move{ index_pawn, index_move, piece, NO_PIECE, FLAG_PAWN_DOUBLE_PUSH, PROMOTION_NONE };
+			//==========================ruch o 2======================================
+			uint64_t push_two_target = double_push & ~all;
+
+			if (push_two_target) {
+				uint8_t index_move_two = get_lsb(&push_two_target);
+				out[count++] = Move{ index_pawn, index_move_two, FLAG_PAWN_DOUBLE_PUSH };
 			}
 		}
-		
+
 		//==========================bicie enPassant======================================
 		if (pos.enPassantSquare != NO_SQUARE){
 			uint8_t ep_index = pos.enPassantSquare;
@@ -789,9 +786,8 @@ void generatePawnMoves(const Position& pos, Move* out, int& count){
 
 			uint64_t ep_capture_targets = pawnAttacks[index_table][index_pawn];
 
-			if (ep_capture_targets & ep_target_bb){
-				uint8_t captured_pawn = pos.isWhiteMove ? BLACK_PAWN : WHITE_PAWN; //make_move to te¿ sprawdza
-				out[count++] = Move{ index_pawn, ep_index, piece, captured_pawn, FLAG_EN_PASSANT, PROMOTION_NONE };
+			if (ep_capture_targets & ep_target_bb){	
+				out[count++] = Move{ index_pawn, ep_index, FLAG_EN_PASSANT};
 			}
 		}
 	}
@@ -806,8 +802,7 @@ void generateQueenMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
 	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
 
-	uint8_t piece = (pos.isWhiteMove) ? WHITE_QUEEN : BLACK_QUEEN;
-	uint64_t quenns = pos.bitBoard[piece];
+	uint64_t quenns = (pos.isWhiteMove) ? pos.bitBoard[WHITE_QUEEN] : pos.bitBoard[BLACK_QUEEN];
 
 	while (quenns) { //liczy dla danego goñca
 		uint8_t index_queen = pop_lsb(&quenns);//okreœla jego pole i usuwa jest puli
@@ -818,8 +813,7 @@ void generateQueenMoves(const Position& pos, Move* out, int& count) {
 		while (moves_to) {
 			uint8_t index_move = pop_lsb(&moves_to);
 
-			uint8_t captured = pos.piece_on_square(index_move);
-			out[count++] = Move{ index_queen, index_move, piece, captured, FLAG_NONE, PROMOTION_NONE };
+			out[count++] = Move{ index_queen, index_move,FLAG_NORMAL};
 		}
 	}
 }

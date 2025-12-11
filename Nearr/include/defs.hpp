@@ -34,25 +34,25 @@ enum Square : uint8_t {
 
 enum Color { WHITE, BLACK };
 
-enum Flags : uint8_t {
-    FLAG_NONE = 0,
+enum MoveFlags : uint8_t {
 
-    FLAG_PAWN_DOUBLE_PUSH = 1 << 0,
-    FLAG_EN_PASSANT = 1 << 1,
-    
-    FLAG_CASTLE_KINGSIDE = 1 << 2,
-    FLAG_CASTLE_QUEENSIDE = 1 << 3,
+    FLAG_NORMAL = 0,
 
-    FLAG_PROMOTION = 1 << 4,
-};
+    FLAG_PAWN_DOUBLE_PUSH = 1, //0001
+    FLAG_EN_PASSANT = 2,       //0010
 
-enum Promotion : uint8_t {
-    PROMOTION_NONE = 0,
+    FLAG_CASTLE_KINGSIDE = 3,  //0011
+    FLAG_CASTLE_QUEENSIDE = 4, //0100
 
-    PROMOTION_BISHOP = 1 << 0,          
-    PROMOTION_KNIGHT = 1 << 1,
-    PROMOTION_ROOK = 1 << 2,
-    PROMOTION_QUEEN = 1 << 3,
+    FLAG_PROMOTION_N = 8,      //1000
+    FLAG_PROMOTION_B = 9,      //1001
+    FLAG_PROMOTION_R = 10,     //1010
+    FLAG_PROMOTION_Q = 11,     //1011
+
+    FLAG_PROMOTION_CAPTURE_N = 12,  //1100
+    FLAG_PROMOTION_CAPTURE_B = 13,  //1101
+    FLAG_PROMOTION_CAPTURE_R = 14,  //1110
+    FLAG_PROMOTION_CAPTURE_Q = 15   //1111
 };
 
 enum CastlingRights : uint8_t {

@@ -22,8 +22,8 @@ public:
     void set_position_FEN(std::string s);
 
     //========================================ROBIENIE RUCHU===============================================================
-    void make_simple_move(uint8_t piece_type, uint64_t from_bb, uint64_t to_bb, uint8_t moving_color_all);
-    void remove_captured_piece(uint8_t captured_piece, uint64_t captured_square_bb, uint8_t captured_color_all);
+    void make_simple_move(uint8_t piece_type, uint64_t from_bb, uint64_t to_bb, Piece moving_color_all);
+    void remove_captured_piece(uint8_t captured_piece, uint64_t captured_square_bb, Piece captured_color_all);
     void promote_pawn(const Move& move, uint64_t to_bb);
     void update_castling_rights(const Move& move);
     void handle_castling_rook(const Move& move);
