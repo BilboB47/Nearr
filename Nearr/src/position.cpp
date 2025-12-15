@@ -1,5 +1,5 @@
 #include "position.hpp"
-
+#include "bitboard_utils.hpp"
 
 
 
@@ -146,10 +146,46 @@ void Position::set_position_FEN(std::string s) {
         this->bitBoard[BLACK_KING];
 }
 
+//=====================================ZOBRIST=============================================================
+void Position::generate_zobrist_key() {
+    //uint64_t pieces[NUM_SQUARES][NUM_PIECE_TYPES];
+    //uint64_t castling[NUM_CASTLING_STATES];
+    //uint64_t enPassant[NUM_FILES];
+    //uint64_t sideToMove;
+    
+    uint64_t key = 0ULL;
+
+
+    for (int i = 0; i < NUM_SQUARES; i++) {
+        uint8_t piece = piece_on_square(i);
+        if (piece != NO_PIECE) {
+            key ^= Zobrist.pieces[i][piece];
+        }
+    }
+
+    key ^= Zobrist.castling[this->castlingRights];
+    
+    if (this->enPassantSquare != NO_SQUARE) {
+        int col = this->enPassantSquare % 8; //zobrist ma kolumny a nie dane pole
+         key ^= Zobrist.enPassant[col];
+    }   
+    
+    if(!this->isWhiteMove)key^=Zobrist.sideToMove; //jest dohaszowana dla ruchu dla czarnych
+
+    this->zobristKey = key;
+}
 
 //========================================ROBIENIE RUCHU===============================================================
 void Position::make_simple_move(uint8_t piece_type, uint64_t from_bb, uint64_t to_bb, Piece moving_color_all)
 {
+    //============ZOBRIST====================
+    //usuniecie z strego pola
+    int from_index = get_lsb(&from_bb);
+    this->zobristKey ^= Zobrist.pieces[from_index][piece_type];
+    //dodanie na nowe pole
+    int to_index = get_lsb(&to_bb);
+    this->zobristKey ^= Zobrist.pieces[to_index][piece_type];
+
     // usun figure z starego pola
     this->bitBoard[piece_type] &= ~from_bb; // U¿ywamy piece_type (Wie¿a lub Król)
     this->bitBoard[moving_color_all] &= ~from_bb;
@@ -159,8 +195,15 @@ void Position::make_simple_move(uint8_t piece_type, uint64_t from_bb, uint64_t t
     this->bitBoard[moving_color_all] |= to_bb;
 }
 void Position::remove_captured_piece(uint8_t captured_piece, uint64_t captured_square_bb, Piece captured_color_all) {
+    
+    //ZOBRIST
+    int index = get_lsb(&captured_square_bb);
+    this->zobristKey ^= Zobrist.pieces[index][captured_piece];
+
+
     this->bitBoard[captured_piece] &= ~captured_square_bb;
     this->bitBoard[captured_color_all] &= ~captured_square_bb;
+
 }
 void Position::promote_pawn(const Move& move, uint64_t to_bb)
 {
@@ -186,6 +229,10 @@ void Position::promote_pawn(const Move& move, uint64_t to_bb)
         return;
     }
 
+    //ZOBRIST
+    int index = get_lsb(&to_bb);
+    this->zobristKey ^= Zobrist.pieces[index][pawn];
+    this->zobristKey ^= Zobrist.pieces[index][promotion_to];
 
     this->bitBoard[pawn] &= ~to_bb; //usun pion ktory jest promowany
     this->bitBoard[promotion_to] |= to_bb; //dodaj now¹ figure
@@ -195,30 +242,37 @@ void Position::update_castling_rights(const Move& move)
     uint8_t moving_piece = this->piece_on_square(move.from);
     uint8_t captured_piece = this->piece_on_square(move.to);
 
-    //ruch krola
-    if (moving_piece == WHITE_KING) this->castlingRights &= ~(WK | WQ);
-    if (moving_piece == BLACK_KING) this->castlingRights &= ~(BK | BQ);
-
+    //=======================WHITE=============================
+    //król
+    if (moving_piece == WHITE_KING) {
+        this->castlingRights &= ~(WK | WQ);
+    } 
     //ruch wie¿y
     if (moving_piece == WHITE_ROOK) {
         if (move.from == A1) this->castlingRights &= ~WQ; 
         if (move.from == H1) this->castlingRights &= ~WK; 
     }
-    if (moving_piece == BLACK_ROOK) {
-        if (move.from == A8) this->castlingRights &= ~BQ; 
-        if (move.from == H8) this->castlingRights &= ~BK; 
-    }
-
-    //zbicie wiezy
+    //zbicie wie¿y
     if (captured_piece == WHITE_ROOK) {
         if (move.to == A1) this->castlingRights &= ~WQ; 
         if (move.to == H1) this->castlingRights &= ~WK; 
     }
+
+    //=======================BLACK=============================
+    //król
+    if (moving_piece == BLACK_KING) this->castlingRights &= ~(BK | BQ);
+    //ruch wie¿y
+    if (moving_piece == BLACK_ROOK) {
+        if (move.from == A8) this->castlingRights &= ~BQ; 
+        if (move.from == H8) this->castlingRights &= ~BK; 
+    }
+    //zbicie wiezy
     if (captured_piece == BLACK_ROOK) {
         if (move.to == A8) this->castlingRights &= ~BQ; 
         if (move.to == H8) this->castlingRights &= ~BK; 
     }
 }
+
 void Position::handle_castling_rook(const Move& move) {
     Square rook_from_sq, rook_to_sq;
     uint8_t rook_piece = isWhiteMove ? WHITE_ROOK : BLACK_ROOK;
@@ -252,18 +306,34 @@ void Position::handle_castling_rook(const Move& move) {
 }
 
 //zrobienie ruchu z uwzgledniem wszystkiego (bez sprawdzania leglnoœci ruchu)
-void Position::make_move(const Move& move){
+UndoInfo Position::make_move(const Move& move){
+        
+    UndoInfo info{};
+        
+    info.castlingRights = this->castlingRights;
+    info.enPassantSquare = this->enPassantSquare;
+    info.halfmoveClock = this->halfmoveClock;
+    info.zobristKey = this->zobristKey;
+
+
         
         uint8_t moving_piece = this->piece_on_square(move.from);
         uint8_t captured_piece = this->piece_on_square(move.to);
 
         if (moving_piece == NO_PIECE)return;
 
+
+        info.capturePiece = captured_piece;
+
         uint64_t from_bb = 1ULL << move.from;
         uint64_t to_bb = 1ULL << move.to;
 
         Piece moving_color_all = (isWhiteMove) ? WHITE_ALL : BLACK_ALL;
         Piece captured_color_all = (isWhiteMove) ? BLACK_ALL : WHITE_ALL;
+
+        if (info.enPassantSquare != NO_SQUARE) {
+            this->zobristKey ^= Zobrist.enPassant[this->enPassantSquare % 8];
+        }
 
         this->enPassantSquare = NO_SQUARE;
 
@@ -291,6 +361,8 @@ void Position::make_move(const Move& move){
     
         //bicie en Passant
         if (move.flags & FLAG_EN_PASSANT) {
+            info.epCapturedSquare = move.to + (isWhiteMove ? -8 : +8); //WP bije wiec by BP musia³ staæ -8 wzgledme tego gdzie jest stoi WP po zbiciu
+
             //w zale¿nosci od koloru bierze pole te ktorê przeskoczy³ pion ktory poruszyl sie o 2
             uint64_t captured_square_bb = (isWhiteMove) ? to_bb >> 8 : to_bb << 8;
             uint8_t captured_pawn = (isWhiteMove) ? BLACK_PAWN: WHITE_PAWN;
@@ -299,7 +371,10 @@ void Position::make_move(const Move& move){
         }
 
         //czy nie straci³y sie prawa do roszady
+        this->zobristKey ^= Zobrist.castling[this->castlingRights];
         update_castling_rights(move);
+        this->zobristKey ^= Zobrist.castling[this->castlingRights];
+
 
         //wykonanie roszady
         if (move.flags == FLAG_CASTLE_KINGSIDE || move.flags == FLAG_CASTLE_QUEENSIDE){
@@ -315,6 +390,8 @@ void Position::make_move(const Move& move){
 
         if (!this->isWhiteMove)this->moveNumber++;
         
+
+        this->zobristKey ^= Zobrist.sideToMove;
         this->isWhiteMove = !this->isWhiteMove;
     }
 

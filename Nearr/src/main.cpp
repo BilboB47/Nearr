@@ -10,7 +10,7 @@ using namespace std::chrono;
 
 void benchmark(Position& pos)
 {
-    const int iterations = 3;
+    const int iterations = 100000;
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -49,21 +49,21 @@ int main() {
     Position pos;
 
 
-    pos.set_position_FEN("1k6/6Pp/8/8/8/8/8/K7 w - - 0 1");
+    pos.set_position_FEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     pos.print_board();
 
     Move moves[256];
 
     
-    int count = generateMoves(pos, moves);
-    pos.make_move(moves[0]);
+    //int count = generateMoves(pos, moves);
+    //pos.make_move(moves[1]);
     //cout << count;
-    pos.print_board();
+    //pos.print_board();
 
    
+    benchmark(pos);
 
 
-    //benchmark(pos);
    
 
 

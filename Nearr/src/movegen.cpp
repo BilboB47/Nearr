@@ -1,28 +1,5 @@
 #include "movegen.hpp"
-
-
-//====================================FUNKCJE BITOWE=============================================================
-inline uint8_t pop_lsb(uint64_t* bitboard)
-{
-	unsigned long index; 
-	if (_BitScanForward64(&index, *bitboard))
-	{
-		*bitboard &= *bitboard - 1; 
-		return static_cast<uint8_t>(index);
-	}
-	return 01; 
-}
-inline uint8_t get_lsb(uint64_t* bitboard)
-{
-	unsigned long index;  
-	if (_BitScanForward64(&index, *bitboard)) {
-		return static_cast<uint8_t>(index);
-	}
-	return 64;
-}
-int count_set_bits(uint64_t bb) {
-	return (int)__popcnt64(bb);
-}
+#include "bitboard_utils.hpp"
 
 //====================================GENEROWANIE LICZB LOSOWYCH=============================================================
 uint64_t random_uint64(std::mt19937_64& generator, std::uniform_int_distribution<uint64_t>& dystrybucja) {
@@ -35,7 +12,6 @@ uint64_t generate_filtered_magic_candidate(std::mt19937_64& generator, std::unif
 
 	return r1 & r2 & r3;
 }
-
 
 //====================================GENEROWANIE WARIANTÓW=============================================================
 void generate_blocker_patterns(uint64_t mask, int num_bits, std::vector<uint64_t>& patterns) {//generuje wszystkie mo¿liwe ustawienie bloków
@@ -74,8 +50,8 @@ void generate_blocker_patterns(uint64_t mask, int num_bits, std::vector<uint64_t
 
 //===================================SPRAWDZANIE CZY POLE JEST ATAKOWANE====================================================
 bool is_square_attacked(const Position& pos, int square, Color attack_by){
-	if (is_pawn_attacked(pos, square, attack_by))return true;
 	if (is_knight_attacked(pos, square, attack_by))return true;
+	if (is_pawn_attacked(pos, square, attack_by))return true;
 	if (is_king_attacked(pos, square, attack_by))return true;
 	if (is_bishop_or_queen_attacked(pos, square, attack_by))return true;
 	if (is_rook_or_queen_attacked(pos, square, attack_by))return true;
@@ -84,11 +60,9 @@ bool is_square_attacked(const Position& pos, int square, Color attack_by){
 }
 bool is_in_check(const Position& pos) {//sprawdza czy ten kto robi ruch otrzymuje szacha
 	
-	uint8_t piece = (pos.isWhiteMove) ?  WHITE_KING : BLACK_KING;
-
 	Color attacking_color = (pos.isWhiteMove) ? BLACK : WHITE;
 
-	uint64_t king_bb = pos.bitBoard[piece];
+	uint64_t king_bb = (pos.isWhiteMove) ? pos.bitBoard[WHITE_KING] : pos.bitBoard[BLACK_KING];
 	int square = get_lsb(&king_bb);
 
 	return is_square_attacked(pos, square, attacking_color);
@@ -97,8 +71,7 @@ bool is_in_check(const Position& pos) {//sprawdza czy ten kto robi ruch otrzymuj
 bool is_pawn_attacked(const Position& pos, int square, Color attack_by) {
 	
 	//atakuj¹cy
-	uint8_t attacking_piece = (attack_by==WHITE) ? WHITE_PAWN : BLACK_PAWN; 
-	uint64_t attacking_pawn = pos.bitBoard[attacking_piece];
+	uint64_t attacking_pawn = (attack_by == WHITE) ? pos.bitBoard[WHITE_PAWN] : pos.bitBoard[BLACK_PAWN];
 
 	//atakowany
 	uint8_t index_table = (attack_by == WHITE) ? 1 : 0;
@@ -110,8 +83,7 @@ bool is_pawn_attacked(const Position& pos, int square, Color attack_by) {
 }
 bool is_king_attacked(const Position& pos, int square, Color attack_by) {
 	//atakuj¹cy
-	uint8_t attacking_piece = (attack_by == WHITE) ? WHITE_KING : BLACK_KING;
-	uint64_t attacking_king = pos.bitBoard[attacking_piece];
+	uint64_t attacking_king = (attack_by == WHITE)? pos.bitBoard[WHITE_KING] : pos.bitBoard[BLACK_KING];
 
 	//odwrocenie ataku
 	uint64_t moves_to = kingAttacks[square];
@@ -120,8 +92,7 @@ bool is_king_attacked(const Position& pos, int square, Color attack_by) {
 }
 bool is_knight_attacked(const Position& pos, int square, Color attack_by) {
 	//atakuj¹cy
-	uint8_t attacking_piece = (attack_by == WHITE) ? WHITE_KNIGHT : BLACK_KNIGHT;
-	uint64_t attacking_knight = pos.bitBoard[attacking_piece];
+	uint64_t attacking_knight = (attack_by == WHITE)? pos.bitBoard[WHITE_KNIGHT] : pos.bitBoard[BLACK_KNIGHT];
 
 	//odwrocenie ataku
 	uint64_t moves_to = knightAttacks[square];
@@ -131,9 +102,9 @@ bool is_knight_attacked(const Position& pos, int square, Color attack_by) {
 bool is_bishop_or_queen_attacked(const Position& pos, int square, Color attack_by) {
 	
 	//atakuj¹cy
-	uint8_t attacking_bishop = (attack_by == WHITE) ? WHITE_BISHOP : BLACK_BISHOP;
-	uint8_t attacking_queen = (attack_by == WHITE) ? WHITE_QUEEN : BLACK_QUEEN;
-	uint64_t attacking_board = pos.bitBoard[attacking_bishop] | pos.bitBoard[attacking_queen];
+	uint64_t attacking_board = (attack_by == WHITE)
+		? (pos.bitBoard[WHITE_BISHOP] | pos.bitBoard[WHITE_QUEEN])
+		: (pos.bitBoard[BLACK_BISHOP] | pos.bitBoard[BLACK_QUEEN]);
 
 	//odwrocenie ataku	
 	uint64_t all = pos.getAllPieces();
@@ -143,9 +114,9 @@ bool is_bishop_or_queen_attacked(const Position& pos, int square, Color attack_b
 }
 bool is_rook_or_queen_attacked(const Position& pos, int square, Color attack_by){
 	//atakuj¹cy
-	uint8_t attacking_rook = (attack_by == WHITE) ? WHITE_ROOK : BLACK_ROOK;
-	uint8_t attacking_queen = (attack_by == WHITE) ? WHITE_QUEEN : BLACK_QUEEN;
-	uint64_t attacking_board = pos.bitBoard[attacking_rook] | pos.bitBoard[attacking_queen];
+	uint64_t attacking_board = (attack_by == WHITE)
+		? (pos.bitBoard[WHITE_ROOK] | pos.bitBoard[WHITE_QUEEN])
+		: (pos.bitBoard[BLACK_ROOK] | pos.bitBoard[BLACK_QUEEN]);
 
 	//odwrocenie ataku	
 	uint64_t all = pos.getAllPieces();
@@ -576,16 +547,18 @@ void initKingAttacks()
 	}
 }
 
-void generateCastlingMoves(const Position& pos, Move* out, int& count)
-{
+void generateCastlingMoves(const Position& pos, Move* out, int& count) {
 	if (is_in_check(pos))return;
 
 	uint64_t all = pos.bitBoard[BLACK_ALL] | pos.bitBoard[WHITE_ALL];
 	//roszada dla bia³ych
 	const Color ENEMY_COLOR = (pos.isWhiteMove) ? BLACK : WHITE;
+
+	//uint8_t castlingRights; // 0001-W_K |0010- W_Q | 0100-B_K | 1000-B_Q
+
 	if (pos.isWhiteMove) {
 		//krótka
-		uint64_t F1_G1_BB = ((1ULL) << F1) | ((1ULL) << G1);
+		uint64_t F1_G1_BB = ((1ULL) << F1) | ((1ULL) << G1); //0x60ULL; 
 
 		if ((pos.castlingRights & WK) && !(all & F1_G1_BB) &&
 			!is_square_attacked(pos, F1, ENEMY_COLOR) &&
@@ -593,9 +566,9 @@ void generateCastlingMoves(const Position& pos, Move* out, int& count)
 
 			out[count++] = Move{ E1, G1,FLAG_CASTLE_KINGSIDE };
 		}
-			//d³uga
-		uint64_t B1_C1_D1_BB = ((1ULL) << B1) | ((1ULL) << C1) | ((1ULL) << D1);
-		
+		//d³uga
+		uint64_t B1_C1_D1_BB = ((1ULL) << B1) | ((1ULL) << C1) | ((1ULL) << D1); //0xEULL; 
+
 		if ((pos.castlingRights & WQ) && !(all & B1_C1_D1_BB) &&
 			!is_square_attacked(pos, D1, ENEMY_COLOR) &&
 			!is_square_attacked(pos, C1, ENEMY_COLOR)) {
@@ -604,10 +577,10 @@ void generateCastlingMoves(const Position& pos, Move* out, int& count)
 		}
 	}
 	//czarna
-	else {
 
+	else {
 		// Krótka 
-		uint64_t F8_G8_BB = ((1ULL) << F8) | ((1ULL) << G8);
+		uint64_t F8_G8_BB = ((1ULL) << F8) | ((1ULL) << G8); //0x6000000000000000ULL;
 		if ((pos.castlingRights & BK) && !(all & F8_G8_BB) &&
 			!is_square_attacked(pos, F8, ENEMY_COLOR) &&
 			!is_square_attacked(pos, G8, ENEMY_COLOR)) {
@@ -616,7 +589,7 @@ void generateCastlingMoves(const Position& pos, Move* out, int& count)
 		}
 
 		// D³uga 
-		uint64_t B8_C8_D8_BB = ((1ULL) << B8) | ((1ULL) << C8) | ((1ULL) << D8);
+		uint64_t B8_C8_D8_BB = ((1ULL) << B8) | ((1ULL) << C8) | ((1ULL) << D8); //0x0E00000000000000ULL; 
 		if ((pos.castlingRights & BQ) && !(all & B8_C8_D8_BB) &&
 			!is_square_attacked(pos, D8, ENEMY_COLOR) &&
 			!is_square_attacked(pos, C8, ENEMY_COLOR)) {
@@ -626,6 +599,7 @@ void generateCastlingMoves(const Position& pos, Move* out, int& count)
 
 	}
 }
+
 void generateKingMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
 	uint64_t friendly = pos.getAllFriendlyPieces();
@@ -641,8 +615,6 @@ void generateKingMoves(const Position& pos, Move* out, int& count) {
 
 	while (moves_to) {
 		uint8_t index_move = pop_lsb(&moves_to);
-
-		if (is_square_attacked(pos, index_move, ENEMY_COLOR))continue;
 
 		out[count++] = Move{ index_king, index_move, FLAG_NORMAL};
 	}
@@ -747,7 +719,6 @@ void generatePawnMoves(const Position& pos, Move* out, int& count){
 				out[count++] = Move{ index_pawn, index_move,FLAG_NORMAL};
 			}
 		}
-
 		//==========================ruch do przodu======================================
 		uint64_t single_push = pawnSingleMoves[index_table][index_pawn];
 		uint64_t double_push = pawnDoubleMoves[index_table][index_pawn];
@@ -777,7 +748,7 @@ void generatePawnMoves(const Position& pos, Move* out, int& count){
 				uint8_t index_move_two = get_lsb(&push_two_target);
 				out[count++] = Move{ index_pawn, index_move_two, FLAG_PAWN_DOUBLE_PUSH };
 			}
-		}
+		}	
 
 		//==========================bicie enPassant======================================
 		if (pos.enPassantSquare != NO_SQUARE){
@@ -830,16 +801,20 @@ void initAttackTables()
 }
 
 int generateMoves(const Position& pos, Move* out)
-{
+{	
 	int count = 0;
+	//dla pozycji r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1	
+										//32 bit move	->	16 bit move
+	generatePawnMoves(pos, out, count);		//159.195 ns	->	35.12 ns
+	generateKnightMoves(pos, out, count);	//158.12 ns		->	7.301 ns
+	generateBishopMoves(pos, out, count);	//232.153 ns	->	12.075 ns
+	generateRookMoves(pos, out, count);		//117.12 ns		->	10.361 ns
+	generateQueenMoves(pos, out, count);	//209.18 ns		->	12.114 ns
+	generateKingMoves(pos, out, count);		//160.811 ns	->	48.836 ns
 
-	generatePawnMoves(pos, out, count); //159.195 ns
-	generateKnightMoves(pos, out, count); //158.12 ns
-	generateBishopMoves(pos, out, count); //232.153 ns
-	generateRookMoves(pos, out, count); //117.12 ns
-	generateQueenMoves(pos, out, count); //209.18 ns
-	generateKingMoves(pos, out, count); //160.811 ns
 
+	//32 bit move + vector			16 bit move + tablica
+	//257.344 ns					118.837 ns
 	return count;
 }
 

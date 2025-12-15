@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "move.hpp"
+#include "zobrist_data.hpp"
 #include <iostream>
 #include <cstdint>
 #include <string>
@@ -16,6 +17,11 @@ public:
     uint64_t zobristKey;
 
 public:
+
+    //=====================================ZOBRIST=============================================================
+    void generate_zobrist_key();
+
+    
     //===============================USTAWIANIE POZYCJI==================================================
     uint8_t piece_char_to_number(const char c);
     void set_start_position();
@@ -28,7 +34,7 @@ public:
     void update_castling_rights(const Move& move);
     void handle_castling_rook(const Move& move);
 
-    void make_move(const Move& move);
+    UndoInfo make_move(const Move& move);
 
     //===================ZBIERANIE INFORMACJI NA TEMAT PLANSZY==============================================================
     uint64_t getAllPieces() const;

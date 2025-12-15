@@ -54,6 +54,9 @@
     <ClCompile Include="tests\test_move_generation.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+    <ClCompile Include="src\zobrist_data.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\defs.hpp">
@@ -76,6 +79,12 @@
     </ClInclude>
     <ClInclude Include="include\ui_console.hpp">
       <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\zobrist_data.hpp">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\bitboard_utils.hpp">
+      <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -25,6 +25,7 @@
     <ClCompile Include="src\position.cpp" />
     <ClCompile Include="src\search.cpp" />
     <ClCompile Include="src\ui_console.cpp" />
+    <ClCompile Include="src\zobrist_data.cpp" />
     <ClCompile Include="tests\test_fen_parsing.cpp" />
     <ClCompile Include="tests\test_main.cpp" />
     <ClCompile Include="tests\test_move_execution.cpp" />
@@ -32,6 +33,7 @@
     <ClCompile Include="tests\test_position_state.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\bitboard_utils.hpp" />
     <ClInclude Include="include\defs.hpp" />
     <ClInclude Include="include\eval.hpp" />
     <ClInclude Include="include\move.hpp" />
@@ -39,6 +41,7 @@
     <ClInclude Include="include\position.hpp" />
     <ClInclude Include="include\search.hpp" />
     <ClInclude Include="include\ui_console.hpp" />
+    <ClInclude Include="include\zobrist_data.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

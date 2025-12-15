@@ -2,15 +2,8 @@
 #include "defs.hpp"
 #include "move.hpp"
 #include "position.hpp"
-#include <vector>
-#include <intrin.h>
 #include <random>
 
-
-//====================================FUNKCJE BITOWE=============================================================
-inline uint8_t pop_lsb(uint64_t* bitboard); //zwraca najznaczy bit
-inline uint8_t get_lsb(uint64_t* bitboard); //zwraca lsb
-inline int count_set_bits(uint64_t bb); //zwraca ilosc bitów w bb
 
 //====================================GENEROWANIE LICZB LOSOWYCH=============================================================
 uint64_t random_uint64(std::mt19937_64& generator, std::uniform_int_distribution<uint64_t>& dystrybucja);
