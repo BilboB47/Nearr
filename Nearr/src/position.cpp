@@ -2,7 +2,6 @@
 #include "bitboard_utils.hpp"
 
 
-
 //===============================USTAWIANIE POZYCJI==================================================
 uint8_t Position::piece_char_to_number(const char c)
 {
@@ -144,14 +143,12 @@ void Position::set_position_FEN(std::string s) {
         this->bitBoard[BLACK_ROOK] |
         this->bitBoard[BLACK_QUEEN] |
         this->bitBoard[BLACK_KING];
+
+    this->generate_zobrist_key(); //utworzenie klucza zobrist dla ustawionej pozycji
 }
 
 //=====================================ZOBRIST=============================================================
 void Position::generate_zobrist_key() {
-    //uint64_t pieces[NUM_SQUARES][NUM_PIECE_TYPES];
-    //uint64_t castling[NUM_CASTLING_STATES];
-    //uint64_t enPassant[NUM_FILES];
-    //uint64_t sideToMove;
     
     uint64_t key = 0ULL;
 
@@ -320,7 +317,9 @@ UndoInfo Position::make_move(const Move& move){
         uint8_t moving_piece = this->piece_on_square(move.from);
         uint8_t captured_piece = this->piece_on_square(move.to);
 
-        if (moving_piece == NO_PIECE)return;
+        if (moving_piece == NO_PIECE) {
+            return UndoInfo{};
+        }
 
 
         info.capturePiece = captured_piece;
@@ -357,6 +356,8 @@ UndoInfo Position::make_move(const Move& move){
             }else {
                 enPassantSquare = move.from-8;
             }
+
+            this->zobristKey ^= Zobrist.enPassant[this->enPassantSquare % 8];
         }
     
         //bicie en Passant
@@ -393,9 +394,120 @@ UndoInfo Position::make_move(const Move& move){
 
         this->zobristKey ^= Zobrist.sideToMove;
         this->isWhiteMove = !this->isWhiteMove;
+
+        return info;
+    }
+
+void Position::unmake_castling_rook(const Move& move) {
+    uint8_t rook_from, rook_to;
+    uint8_t rook_type;
+
+    if (move.flags == FLAG_CASTLE_KINGSIDE) { //krótka
+        if (this->isWhiteMove) { //bia³e
+            rook_type = WHITE_ROOK;
+            rook_from = H1; 
+            rook_to = F1;   
+        }
+        else { //czarne
+            rook_type = BLACK_ROOK;
+            rook_from = H8;
+            rook_to = F8;
+        }
+    }
+    else if (move.flags == FLAG_CASTLE_QUEENSIDE) {
+        if (this->isWhiteMove) { //bia³e
+            rook_type = WHITE_ROOK;
+            rook_from = A1;
+            rook_to = D1;
+        }
+        else { //czarne
+            rook_type = BLACK_ROOK;
+            rook_from = A8;
+            rook_to = D8;
+        }
+    }
+    else {
+        return; 
+    }
+
+    uint64_t r_from_bb = 1ULL << rook_from;
+    uint64_t r_to_bb = 1ULL << rook_to;
+    Piece moving_color_all = (this->isWhiteMove) ? WHITE_ALL : BLACK_ALL;
+
+    make_simple_move(rook_type, r_to_bb, r_from_bb, moving_color_all);
+}
+
+void Position::unmake_move(const Move& move, const UndoInfo& info) {
+
+    //uint16_t moveNumber;          zmiana koloru i ruch mniej
+    if (this->isWhiteMove)this->moveNumber--;
+
+    //bool isWhiteMove;             zwyk³y swap
+    this->isWhiteMove = !this->isWhiteMove;
+
+    //uint8_t capturePiece;		
+    //uint8_t epCapturedSquare;	
+    
+    //==============================uint64_t bitBoard[14];=============================================
+    
+    
+    uint64_t from_bb = 1ULL << move.from;
+    uint64_t to_bb = 1ULL << move.to;
+
+    uint8_t on_to_piece = this->piece_on_square(move.to); 
+    uint8_t caputre_piece = info.capturePiece;
+    
+    Piece moving_color_all = (isWhiteMove) ? WHITE_ALL : BLACK_ALL;
+    Piece captured_color_all = (isWhiteMove) ? BLACK_ALL : WHITE_ALL;
+
+
+    //=============================procmocja + ruch=======================================
+    if (move.flags & 0b1000){ //flaga promocji
+        uint8_t pawn = (this->isWhiteMove) ? WHITE_PAWN : BLACK_PAWN;
+
+        this->bitBoard[on_to_piece] &= ~to_bb;
+        this->bitBoard[moving_color_all] &= ~to_bb;
+
+        this->bitBoard[pawn] |= from_bb;
+        this->bitBoard[moving_color_all] |= from_bb;
+    }
+    else {
+        //cofniêcie po³o¿enia figury
+        make_simple_move(on_to_piece, to_bb, from_bb, moving_color_all);
+    }
+
+    //===============================postawienie zbitej===================================
+    //dodanie zbitego piona
+    if (info.capturePiece != NO_PIECE) {
+        if (move.flags & FLAG_EN_PASSANT) {
+            int ep_sq = move.to + (this->isWhiteMove ? -8 : 8);
+            this->bitBoard[info.capturePiece] |= (1ULL << ep_sq);
+            this->bitBoard[captured_color_all] |= (1ULL << ep_sq);
+        }
+        else {
+            this->bitBoard[info.capturePiece] |= to_bb;
+            this->bitBoard[captured_color_all] |= to_bb;
+        }
+    }
+    
+    //==============================roszada======================================================
+    if (move.flags == FLAG_CASTLE_KINGSIDE || move.flags == FLAG_CASTLE_QUEENSIDE) {
+        unmake_castling_rook(move);
     }
 
 
+    //uint8_t castlingRights;       kopia z info
+    //uint8_t enPassantSquare;      kopia z info
+    //uint8_t halfmoveClock;        kopia z info
+    //uint64_t zobristKey;          kopia z info
+    this->castlingRights = info.castlingRights;
+    this->enPassantSquare = info.enPassantSquare;
+    this->halfmoveClock = info.halfmoveClock;
+    this->zobristKey = info.zobristKey;
+    
+
+
+}
 
 //===================ZBIERANIE INFORMACJI NA TEMAT PLANSZY==============================================================
 uint64_t Position::getAllPieces() const{

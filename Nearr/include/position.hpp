@@ -34,6 +34,9 @@ public:
     void update_castling_rights(const Move& move);
     void handle_castling_rook(const Move& move);
 
+    void unmake_move(const Move& move, const UndoInfo& info);
+
+    void unmake_castling_rook(const Move& move);
     UndoInfo make_move(const Move& move);
 
     //===================ZBIERANIE INFORMACJI NA TEMAT PLANSZY==============================================================

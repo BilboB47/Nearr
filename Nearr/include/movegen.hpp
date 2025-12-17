@@ -16,7 +16,8 @@ void generate_blocker_patterns(uint64_t mask, int num_bits, std::vector<uint64_t
 //===================================SPRAWDZANIE CZY POLE JEST ATAKOWANE====================================================
 
 bool is_square_attacked(const Position& pos, int square, Color attack_by);
-bool is_in_check(const Position& pos);
+bool is_in_check_friendly(const Position& pos);
+bool is_in_check_enemy(const Position& pos);
 
 bool is_pawn_attacked(const Position& pos, int square, Color attack_by);
 bool is_knight_attacked(const Position& pos, int square, Color attack_by);

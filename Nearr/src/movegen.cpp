@@ -58,11 +58,20 @@ bool is_square_attacked(const Position& pos, int square, Color attack_by){
 
 	return false;
 }
-bool is_in_check(const Position& pos) {//sprawdza czy ten kto robi ruch otrzymuje szacha
+bool is_in_check_friendly(const Position& pos) {//sprawdza czy ten kto robi ruch otrzymuje szacha
 	
 	Color attacking_color = (pos.isWhiteMove) ? BLACK : WHITE;
-
 	uint64_t king_bb = (pos.isWhiteMove) ? pos.bitBoard[WHITE_KING] : pos.bitBoard[BLACK_KING];
+
+	int square = get_lsb(&king_bb);
+
+	return is_square_attacked(pos, square, attacking_color);
+}
+bool is_in_check_enemy(const Position& pos) {//sprawdza czy ten kto robi ruch otrzymuje szacha
+
+	Color attacking_color = (pos.isWhiteMove) ? WHITE : BLACK;
+	uint64_t king_bb = (pos.isWhiteMove) ? pos.bitBoard[BLACK_KING] : pos.bitBoard[WHITE_KING];
+
 	int square = get_lsb(&king_bb);
 
 	return is_square_attacked(pos, square, attacking_color);
@@ -548,7 +557,7 @@ void initKingAttacks()
 }
 
 void generateCastlingMoves(const Position& pos, Move* out, int& count) {
-	if (is_in_check(pos))return;
+	if (is_in_check_friendly(pos))return;
 
 	uint64_t all = pos.bitBoard[BLACK_ALL] | pos.bitBoard[WHITE_ALL];
 	//roszada dla bia³ych
