@@ -64,7 +64,6 @@ bool is_in_check_friendly(const Position& pos) {//sprawdza czy ten kto robi ruch
 	uint64_t king_bb = (pos.isWhiteMove) ? pos.bitBoard[WHITE_KING] : pos.bitBoard[BLACK_KING];
 
 	int square = get_lsb(&king_bb);
-
 	return is_square_attacked(pos, square, attacking_color);
 }
 bool is_in_check_enemy(const Position& pos) {//sprawdza czy ten kto robi ruch otrzymuje szacha
@@ -72,11 +71,13 @@ bool is_in_check_enemy(const Position& pos) {//sprawdza czy ten kto robi ruch ot
 	Color attacking_color = (pos.isWhiteMove) ? WHITE : BLACK;
 	uint64_t king_bb = (pos.isWhiteMove) ? pos.bitBoard[BLACK_KING] : pos.bitBoard[WHITE_KING];
 
+	if (king_bb == 0) {
+		return true;
+	}
 	int square = get_lsb(&king_bb);
 
 	return is_square_attacked(pos, square, attacking_color);
 }
-
 bool is_pawn_attacked(const Position& pos, int square, Color attack_by) {
 	
 	//atakuj¹cy
@@ -110,6 +111,11 @@ bool is_knight_attacked(const Position& pos, int square, Color attack_by) {
 }
 bool is_bishop_or_queen_attacked(const Position& pos, int square, Color attack_by) {
 	
+	if (square < 0 || square > 63) {
+		throw("CRITICAL ERROR: Square out of bounds:");
+		return false;
+	}
+
 	//atakuj¹cy
 	uint64_t attacking_board = (attack_by == WHITE)
 		? (pos.bitBoard[WHITE_BISHOP] | pos.bitBoard[WHITE_QUEEN])
