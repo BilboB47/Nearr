@@ -224,6 +224,20 @@ void perft_divider(Position& pos, int depth) {
     std::cout << "Suma wszystkich wezlow: " << total_nodes << std::endl;
 }
 
+void print_castling_rights(uint8_t rights) {
+    std::cout << "Prawa do roszady: ";
+    if (rights == 0) {
+        std::cout << "-";
+    }
+    else {
+        if (rights & WK) std::cout << "K";
+        if (rights & WQ) std::cout << "Q";
+        if (rights & BK) std::cout << "k";
+        if (rights & BQ) std::cout << "q";
+    }
+    // Opcjonalnie wypisz wartość binarną dla debugowania
+    std::cout << " (bitowo: " << (int)rights << ")" << std::endl;
+}
 
 int main() {
 
@@ -239,18 +253,41 @@ int main() {
     //pos.set_position_FEN("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/4K3 b - - 0 1");
     
     //pos.set_position_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");//git 3
-    pos.set_position_FEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");//blad d=3
+    //pos.set_position_FEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");//git ale bylo źle
     //pos.set_position_FEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");//git 3
     //pos.set_position_FEN("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"); //git 3
     //pos.set_position_FEN("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1 "); //git 3
     //pos.set_position_FEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");//blad d=3
-    //pos.set_position_FEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"); //git
-   //pos.set_position_FEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"); //git
+    pos.set_position_FEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"); //git
+
+    perft_divider(pos, 4);
+
+    return 0;
+
+    //pos.set_position_FEN("rnbqkbnr/pppppppp/8/8/8/8/8/R3K2R w KQkq - 0 1");//blad d=3
+    
+    //pos.set_position_FEN("4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1");//blad d=3
 
 
-    //perft_divider(pos, 3);
+    //Position c = pos;
+    //pos.print_board();
+    //print_castling_rights(pos.castlingRights);
+    //Move m[256];
+    //generateMoves(pos, m); //23           22
+    //UndoInfo i = pos.make_move(m[20]);
+    //pos.print_board();
+    //print_castling_rights(pos.castlingRights);
 
-    //return 0;
+    //pos.unmake_move(m[0], i);
+
+    //pos.print_board();
+    
+    //if (!test_compree(pos, c)) {
+    //    cout << "d";
+    //}
+
+
+   //return 0;
 
     pos.print_board();
 
@@ -274,6 +311,8 @@ int main() {
             continue;
         }
 
+            pos.print_board();
+
         // --- POZIOM 2 ---
         Move moves2[256];
         int count2 = generateMoves(pos, moves2);
@@ -286,7 +325,7 @@ int main() {
                 pos = copy2; // Przywracamy stan sprzed moves2[j]
                 continue;
             }
-
+            pos.print_board();
        
             // --- POZIOM 3 ---
             Move moves3[256];

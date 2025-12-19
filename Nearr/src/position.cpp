@@ -312,9 +312,15 @@ UndoInfo Position::make_move(const Move& move){
         uint8_t moving_piece = this->piece_on_square(move.from);
         uint8_t captured_piece = this->piece_on_square(move.to);
     
-        if (moving_piece == NO_PIECE) {
-            return UndoInfo{};
-        }
+        //czy nie straci³y sie prawa do roszady
+        this->zobristKey ^= Zobrist.castling[this->castlingRights];
+        update_castling_rights(move);
+        this->zobristKey ^= Zobrist.castling[this->castlingRights];
+
+
+        //if (moving_piece == NO_PIECE) {
+        //    return UndoInfo{};
+        //}
 
         info.capturePiece = captured_piece;
 
@@ -366,11 +372,6 @@ UndoInfo Position::make_move(const Move& move){
             remove_captured_piece(captured_pawn, captured_square_bb, captured_color_all);
         }
 
-        //czy nie straci³y sie prawa do roszady
-        this->zobristKey ^= Zobrist.castling[this->castlingRights];
-        update_castling_rights(move);
-        this->zobristKey ^= Zobrist.castling[this->castlingRights];
-
 
         //wykonanie roszady
         if (move.flags == FLAG_CASTLE_KINGSIDE || move.flags == FLAG_CASTLE_QUEENSIDE){
@@ -396,6 +397,7 @@ UndoInfo Position::make_move(const Move& move){
 void Position::unmake_castling_rook(const Move& move) {
     uint8_t rook_from, rook_to;
     uint8_t rook_type;
+
 
     if (move.flags == FLAG_CASTLE_KINGSIDE) { //krótka
         if (this->isWhiteMove) { //bia³e
@@ -431,6 +433,7 @@ void Position::unmake_castling_rook(const Move& move) {
 
     make_simple_move(rook_type, r_to_bb, r_from_bb, moving_color_all);
 }
+
 
 void Position::unmake_move(const Move& move, const UndoInfo& info) {
 
