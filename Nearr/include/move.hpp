@@ -18,6 +18,8 @@ struct Move
 
 struct UndoInfo 
 {
+	uint64_t zobristKey;
+
 	uint8_t capturePiece;		//zbity pion WHITE_PAWN ITD.
 	uint8_t epCapturedSquare;	//pole na którym sta³ pion zbity przez epPassant
 
@@ -25,5 +27,4 @@ struct UndoInfo
 	uint8_t enPassantSquare;	//0-63 na jakim polu jest prawo do epPassnat
 
 	uint8_t halfmoveClock;	
-	uint64_t zobristKey;
 };
