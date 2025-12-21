@@ -14,32 +14,6 @@ std::string square_to_string(int sq) {
     return std::string() + file + rank;
 }
 
-void benchmark(Position& pos)
-{
-    const int iterations = 100000;
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    volatile int sink = 0;
-
-    for (int i = 0; i < iterations; i++)
-    {
-        Move moves[256];
-        int count = generateMoves(pos, moves);
-
-        sink += count;   // zapobiega optymalizacji
-    }
-
-    auto end = std::chrono::high_resolution_clock::now();
-
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-
-    double avg_ns = double(duration) / iterations;
-
-    std::cout << "Średni czas jednego generateMoves: "
-        << avg_ns << " ns\n";
-}
-
 bool compare_position(const Position& p1, const Position& p2) {
     for (int i = 0; i < 14; i++) {
         if (p1.bitBoard[i] != p2.bitBoard[i]) return false;
@@ -125,22 +99,7 @@ bool test_compree(const Position& pos, const Position& copy2) {
     return isCorrect;
 }
 
-
-void print_castling_rights(uint8_t rights) {
-    std::cout << "Prawa do roszady: ";
-    if (rights == 0) {
-        std::cout << "-";
-    }
-    else {
-        if (rights & WK) std::cout << "K";
-        if (rights & WQ) std::cout << "Q";
-        if (rights & BK) std::cout << "k";
-        if (rights & BQ) std::cout << "q";
-    }
-    // Opcjonalnie wypisz wartość binarną dla debugowania
-    std::cout << " (bitowo: " << (int)rights << ")" << std::endl;
-}
-void print_move(Move m) {
+void print_move(const Move m) {
     std::string fromSquare = square_to_string(m.from);
     std::string toSquare = square_to_string(m.to);
 
@@ -150,7 +109,10 @@ void print_move(Move m) {
 }
 
 uint64_t perft_fast(Position& pos, int depth) {
-    if (depth == 0) return 1;
+    if (depth == 0) {
+        return 1;
+    }
+    
 
     uint64_t nodes = 0;
     Move moves[256];
@@ -193,6 +155,7 @@ void perft_divider(Position& pos, int depth) {
     std::cout << "=================================" << std::endl;
     std::cout << "Suma wszystkich wezlow: " << total_nodes << std::endl;
 }
+
 void run_benchmark(Position& pos, int depth) {
     std::cout << "Rozpoczynam test wydajnosci (Perft depth " << depth << ")..." << std::endl;
 
@@ -226,14 +189,12 @@ int main() {
     //pos.set_position_FEN("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"); //git 3
     //pos.set_position_FEN("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1 "); //git 3
     //pos.set_position_FEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");//blad d=3
-    //pos.set_position_FEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"); //git
+    pos.set_position_FEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"); //git
 
-
-    pos.set_position_FEN("r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQkq - 0 1"); //git
-    //perft_divider(pos, 5);
-    run_benchmark(pos,4);
-
+        
     pos.print_board();
+
+    run_benchmark(pos,5);
 
     return 0;
 
@@ -243,85 +204,3 @@ int main() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//uint64_t perft(Position& pos, int depth) {
-//    if (depth == 0) return 1;
-//
-//    uint64_t nodes = 0;
-//    Move moves[256];
-//    int count = generateMoves(pos, moves);
-//
-//    for (int i = 0; i < count; i++) {
-//        // 1. Zapisujemy stan IDEALNY przed ruchem
-//        Position copy_before = pos;
-//
-//        // 2. Wykonujemy ruch
-//        UndoInfo info = pos.make_move(moves[i]);
-//
-//        // 3. Sprawdzamy legalność
-//        if (is_in_check_enemy(pos)) {
-//            pos.unmake_move(moves[i], info);
-//
-//            // TEST: Czy unmake zadziałał poprawnie dla ruchu nielegalnego?
-//            if (!test_compree(pos, copy_before)) {
-//                std::cout << "Stan planszy po blednym unmake:" << std::endl;
-//                pos.print_board(); // Wypisuje aktualna (bledna) plansze
-//
-//                std::cout << "\nNacisnij ENTER, aby kontynuowac debugowanie..." << std::endl;
-//                std::cin.get();
-//            }
-//            continue;
-//        }
-//
-//        // 4. Rekurencja
-//        nodes += perft(pos, depth - 1);
-//
-//        // 5. Cofamy ruch
-//        pos.unmake_move(moves[i], info);
-//
-//        // 6. TEST: Sprawdzamy, czy po unmake plansza wróciła do stanu copy_before
-//        if (!test_compree(pos, copy_before)) {
-//            std::cout << "Glebokosc (depth): " << depth << std::endl;
-//            std::cout << "Stan planszy po blednym unmake:" << std::endl;
-//            pos.print_board(); // Wypisuje aktualna (bledna) plansze
-//
-//            std::cout << "\nNacisnij ENTER, aby kontynuowac debugowanie..." << std::endl;
-//            std::cin.get();
-//        }
-//    }
-//    return nodes;
-//}

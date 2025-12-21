@@ -110,12 +110,6 @@ bool is_knight_attacked(const Position& pos, int square, Color attack_by) {
 	return (attacking_knight & moves_to) != 0;
 }
 bool is_bishop_or_queen_attacked(const Position& pos, int square, Color attack_by) {
-	
-	if (square < 0 || square > 63) {
-		throw("CRITICAL ERROR: Square out of bounds:");
-		return false;
-	}
-
 	//atakuj¹cy
 	uint64_t attacking_board = (attack_by == WHITE)
 		? (pos.bitBoard[WHITE_BISHOP] | pos.bitBoard[WHITE_QUEEN])

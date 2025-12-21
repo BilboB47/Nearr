@@ -2,6 +2,7 @@
 #include <intrin.h>
 #include "defs.hpp"
 
+//============================funkcje pomocnicze do operacji bitowych==============================================
 inline uint8_t pop_lsb(uint64_t* bitboard)
 {
 	unsigned long index;

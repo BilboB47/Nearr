@@ -201,6 +201,7 @@ void Position::remove_captured_piece(uint8_t captured_piece, uint64_t captured_s
     this->bitBoard[captured_piece] &= ~captured_square_bb;
     this->bitBoard[captured_color_all] &= ~captured_square_bb;
 }
+
 void Position::promote_pawn(const Move& move, uint64_t to_bb)
 {
     uint8_t promotion_to;
@@ -232,6 +233,7 @@ void Position::promote_pawn(const Move& move, uint64_t to_bb)
     this->bitBoard[pawn] &= ~to_bb; //usun pion ktory jest promowany
     this->bitBoard[promotion_to] |= to_bb; //dodaj now¹ figure
 }
+
 void Position::update_castling_rights(const Move& move)
 {   
     uint8_t moving_piece = this->piece_on_square(move.from);
@@ -267,7 +269,6 @@ void Position::update_castling_rights(const Move& move)
         if (move.to == H8) this->castlingRights &= ~BK; 
     }
 }
-
 void Position::handle_castling_rook(const Move& move) {
     Square rook_from_sq, rook_to_sq;
     uint8_t rook_piece = isWhiteMove ? WHITE_ROOK : BLACK_ROOK;
@@ -300,7 +301,8 @@ void Position::handle_castling_rook(const Move& move) {
     make_simple_move(rook_piece, from_bb, to_bb, moving_color_all);
 }
 
-//zrobienie ruchu z uwzgledniem wszystkiego (bez sprawdzania leglnoœci ruchu)
+
+//----------------------move/unmake move-----------------------------------------------
 UndoInfo Position::make_move(const Move& move){
     
     UndoInfo info;
@@ -433,8 +435,6 @@ void Position::unmake_castling_rook(const Move& move) {
 
     make_simple_move(rook_type, r_to_bb, r_from_bb, moving_color_all);
 }
-
-
 void Position::unmake_move(const Move& move, const UndoInfo& info) {
 
     //uint16_t moveNumber;          zmiana koloru i ruch mniej
@@ -526,6 +526,7 @@ void Position::unmake_move(const Move& move, const UndoInfo& info) {
 }
 
 
+
 //===================ZBIERANIE INFORMACJI NA TEMAT PLANSZY==============================================================
 uint64_t Position::getAllPieces() const{
     return bitBoard[WHITE_ALL] | bitBoard[BLACK_ALL];
@@ -546,6 +547,8 @@ uint8_t Position::piece_on_square(int sq) const
     return NO_PIECE;
 }
 
+
+//=============================UI==============================================================
 char Position::piece_to_char(int piece_index) {
     // Prosta konwersja indeksu piece_index (0-11) na symbol FEN
     switch (piece_index) {

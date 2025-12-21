@@ -2,6 +2,7 @@
 #include <cstdint>
 #include "defs.hpp"
 
+
 struct Move 
 {
 	uint16_t from : 6;		//0-63 <=> a1-h8

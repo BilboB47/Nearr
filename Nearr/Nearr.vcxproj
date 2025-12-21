@@ -42,7 +42,6 @@
     <ClInclude Include="include\search.hpp" />
     <ClInclude Include="include\ui_console.hpp" />
     <ClInclude Include="include\zobrist_data.hpp" />
-    <ClInclude Include="src\main.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

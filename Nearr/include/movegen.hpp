@@ -82,7 +82,7 @@ void generatePawnMoves(const Position& pos, Move* out, int& count);
 uint64_t get_queen_attacks(int square, uint64_t board);
 void generateQueenMoves(const Position& pos, Move* out, int& count);
 
-
+//======================================================================================================
 void initAttackTables();
 int generateMoves(const Position& pos, Move* out);
 

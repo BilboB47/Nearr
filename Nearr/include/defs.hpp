@@ -1,6 +1,9 @@
 #pragma once
 #include <cstdint>
 
+
+
+//==============================POSITION============================================================
 enum Piece : uint8_t { //s¹ równoznacze z indexami w bitboard
     WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN, WHITE_KING,
     BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING,
@@ -9,7 +12,7 @@ enum Piece : uint8_t { //s¹ równoznacze z indexami w bitboard
 };
 
 
-enum Square : uint8_t {
+enum Square : uint8_t { //index oznacza pozycje na szachownicy
     A1, B1, C1, D1, E1, F1, G1, H1,
     A2, B2, C2, D2, E2, F2, G2, H2,
     A3, B3, C3, D3, E3, F3, G3, H3,
@@ -20,7 +23,6 @@ enum Square : uint8_t {
     A8, B8, C8, D8, E8, F8, G8, H8,
     NO_SQUARE = 255
 };
-
 /// 8 | 56 57 58 59 60 61 62 63
 /// 7 | 48 49 50 51 52 53 54 55
 /// 6 | 40 41 42 43 44 45 46 47
@@ -30,10 +32,20 @@ enum Square : uint8_t {
 /// 2 | 8  9 10 11 12 13 14 15
 /// 1 | 0  1  2  3  4  5  6  7
 ///     A  B  C  D  E  F  G  H
+
+enum CastlingRights : uint8_t {//flagi prawa do roszad
+    WK = 1,  // 0001: White Kingside (Krótka Bia³e)
+    WQ = 2,  // 0010: White Queenside (D³uga Bia³e)
+    BK = 4,  // 0100: Black Kingside (Krótka Czarne)
+    BQ = 8,  // 1000: Black Queenside (D³uga Czarne)
+};
     
 
-enum Color { WHITE, BLACK };
+enum Color { WHITE, BLACK };//kolor
 
+
+//===============================MOVE===================================================
+//flagi
 enum MoveFlags : uint8_t {
 
     FLAG_NORMAL = 0,
@@ -43,6 +55,8 @@ enum MoveFlags : uint8_t {
 
     FLAG_CASTLE_KINGSIDE = 3,  //0011
     FLAG_CASTLE_QUEENSIDE = 4, //0100
+
+    //DODAÆ FLAGE KTÓRA MÓWI ZE JEST TO BICIE
 
     FLAG_PROMOTION_N = 8,      //1000
     FLAG_PROMOTION_B = 9,      //1001
@@ -55,12 +69,6 @@ enum MoveFlags : uint8_t {
     FLAG_PROMOTION_CAPTURE_Q = 15   //1111
 };
 
-enum CastlingRights : uint8_t {
-    WK = 1,  // 0001: White Kingside (Krótka Bia³e)
-    WQ = 2,  // 0010: White Queenside (D³uga Bia³e)
-    BK = 4,  // 0100: Black Kingside (Krótka Czarne)
-    BQ = 8,  // 1000: Black Queenside (D³uga Czarne)
-};
 
 
 
