@@ -5,10 +5,6 @@
 
 using namespace std;
 
-
-void ToArray(const Position &curP, char (&board)[8][8]);
-wchar_t pieceToUnicode(char p);
-void printBoard(char(&board)[8][8]);
-void printBoard(wchar_t(&board)[8][8]);
+char get_piece_from_number(uint8_t n);
 std::string squareToString(int index);
-void printMoves(std::vector<Move> &moves);
+void print_move(const Move m);

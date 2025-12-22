@@ -2,30 +2,37 @@
 #include "defs.hpp"
 #include "move.hpp"
 #include "position.hpp"
+
 #include <random>
 
 
-//====================================GENEROWANIE LICZB LOSOWYCH=============================================================
+//====================================GENEROWANIE LICZB LOSOWYCH================================================================================================================================================
 uint64_t random_uint64(std::mt19937_64& generator, std::uniform_int_distribution<uint64_t>& dystrybucja);
 uint64_t generate_filtered_magic_candidate(std::mt19937_64& generator, std::uniform_int_distribution<uint64_t>& dystrybucja);
 
-//====================================GENEROWANIE WARIANTÓW=============================================================
-void generate_blocker_patterns(uint64_t mask, int num_bits, std::vector<uint64_t>& patterns);
-
-
-//===================================SPRAWDZANIE CZY POLE JEST ATAKOWANE====================================================
+//===================================SPRAWDZANIE CZY POLE JEST ATAKOWANE=======================================================================================================================================
 
 bool is_square_attacked(const Position& pos, int square, Color attack_by);
-bool is_in_check_friendly(const Position& pos);
-bool is_in_check_enemy(const Position& pos);
+bool is_in_check_friendly(const Position& pos);	
+bool is_in_check_enemy(const Position& pos);	
 
-bool is_pawn_attacked(const Position& pos, int square, Color attack_by);
-bool is_knight_attacked(const Position& pos, int square, Color attack_by);
+
+bool is_pawn_attacked(const Position& pos, int square, Color attack_by);	
+bool is_knight_attacked(const Position& pos, int square, Color attack_by);	
 bool is_king_attacked(const Position& pos, int square, Color attack_by);
 bool is_bishop_or_queen_attacked(const Position& pos, int square, Color attack_by);
 bool is_rook_or_queen_attacked(const Position& pos, int square, Color attack_by);
 
-//====================================WIE¯A=========================================================================
+
+
+//===========================================================================================================================================================================================================================
+//--------------------------------------GENEROWANIE RUCHÓw POSZCZEGÓLNYCH FIGUR----------------------------------------------------------------------------
+//==============================================================================================================================================================================================================================
+
+//====================================GENEROWANIE WARIANTÓW BLOCKERÓW DLA SLIDEING PIECE============================================================================
+void generate_blocker_patterns(uint64_t mask, int num_bits, std::vector<uint64_t>& patterns);
+
+//====================================WIE¯A======================================================================================================================================================================
 extern uint64_t RookMasks[64];
 extern uint64_t RookMagicNumbers[64];
 extern uint64_t RookShifts[64];
@@ -41,7 +48,7 @@ uint64_t get_rook_attacks(int square, uint64_t board);
 void generateRookMoves(const Position& pos, Move* out, int& count);
 
 
-//====================================GONIEC=========================================================================
+//====================================GONIEC============================================================================================================================================================
 extern uint64_t BishopMasks[64];
 extern uint64_t BishopMagicNumbers[64];
 extern uint64_t BishopShifts[64];
@@ -55,19 +62,22 @@ void initBishopMagics();
 uint64_t get_bishop_attacks(int square, uint64_t board);
 void generateBishopMoves(const Position& pos,Move* out,int  &count);
 
+//====================================HETMAN================================================================================================================================================
+uint64_t get_queen_attacks(int square, uint64_t board);
+void generateQueenMoves(const Position& pos, Move* out, int& count);
 
-//====================================SKOCZEK=============================================================
+//====================================SKOCZEK================================================================================================================================================
 extern uint64_t knightAttacks[64];
 void initKnightAttacks();
 void generateKnightMoves(const Position& pos, Move* out, int& count);
 
-//====================================KRÓL=============================================================
+//====================================KRÓL================================================================================================================================================
 extern uint64_t kingAttacks[64];
 void initKingAttacks();		
 void generateCastlingMoves(const Position& pos, Move* out, int& count);
 void generateKingMoves(const Position& pos, Move* out, int& count);
 
-//====================================PION=============================================================
+//====================================PION================================================================================================================================================
 extern uint64_t pawnAttacks[2][64];
 extern uint64_t pawnSingleMoves[2][64];
 extern uint64_t pawnDoubleMoves[2][64];
@@ -77,12 +87,10 @@ void initPawnMoves();
 void initPawnTables();
 void generatePawnMoves(const Position& pos, Move* out, int& count);
 
+//=========================================================================================================================================================================================
+//---------------------------INICJACJA WSZYSTKICH TABLIC DO RUCHIW ORAZ GENERNOWANIE RUCHÓW----------------------------------------------------------------------------
+//=========================================================================================================================================================================================
 
-//====================================HETMAN=============================================================
-uint64_t get_queen_attacks(int square, uint64_t board);
-void generateQueenMoves(const Position& pos, Move* out, int& count);
-
-//======================================================================================================
 void initAttackTables();
 int generateMoves(const Position& pos, Move* out);
 

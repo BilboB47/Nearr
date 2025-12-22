@@ -8,12 +8,6 @@
 #include <iomanip>
 
 
-std::string square_to_string(int sq) {
-    char file = 'a' + (sq % 8);
-    char rank = '1' + (sq / 8);
-    return std::string() + file + rank;
-}
-
 bool compare_position(const Position& p1, const Position& p2) {
     for (int i = 0; i < 14; i++) {
         if (p1.bitBoard[i] != p2.bitBoard[i]) return false;
@@ -99,14 +93,7 @@ bool test_compree(const Position& pos, const Position& copy2) {
     return isCorrect;
 }
 
-void print_move(const Move m) {
-    std::string fromSquare = square_to_string(m.from);
-    std::string toSquare = square_to_string(m.to);
 
-    std::cout << fromSquare << toSquare;
-
-    std::cout << std::endl;
-}
 
 uint64_t perft_fast(Position& pos, int depth) {
     if (depth == 0) {

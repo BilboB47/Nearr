@@ -172,6 +172,7 @@ void Position::generate_zobrist_key() {
     this->zobristKey = key;
 }
 
+
 //========================================ROBIENIE RUCHU===============================================================
 void Position::make_simple_move(uint8_t piece_type, uint64_t from_bb, uint64_t to_bb, Piece moving_color_all)
 {

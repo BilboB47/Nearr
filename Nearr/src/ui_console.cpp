@@ -20,59 +20,6 @@ char get_piece_from_number(uint8_t n) {
     }
     return piece;
 }
-void ToArray(const Position& curP, char(&board)[8][8]) {
-
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            board[i][j] = ((i + j) % 2 == 0) ? '.' : '#';
-        }
-    }
-
-
-    for (int i = 0; i < 12; i++) {
-
-        char piece = get_piece_from_number(i);
-
-        for (int j = 0; j < 64; j++) {
-            if (curP.bitBoard[i] & (1ULL << j)) {
-                int row = 7 - (j / 8); 
-                int col = j % 8;
-                board[row][col] = piece;
-            }
-        }
-    }
-
-}
-
-wchar_t pieceToUnicode(char p) {
-    switch (p) {
-    case 'r': return L'♜';
-    case 'n': return L'♞';
-    case 'b': return L'♝';
-    case 'q': return L'♛';
-    case 'k': return L'♚';
-    case 'p': return L'♟';
-    case 'R': return L'♖';
-    case 'N': return L'♘';
-    case 'B': return L'♗';
-    case 'Q': return L'♕';
-    case 'K': return L'♔';
-    case 'P': return L'♙';
-    default:  return L' ';
-    }
-    return L' ';
-}
-
-void printBoard(char(&board)[8][8]){
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            cout << board[i][j];
-        }cout << "\n";
-    }
-}
-
-void printBoard(wchar_t(&board)[8][8]){
-}
 
 std::string squareToString(int index) {
     int file = index % 8;  // kolumna (A–H)
@@ -82,4 +29,12 @@ std::string squareToString(int index) {
     return std::string() + fileChar + rankChar;
 }
 
+void print_move(const Move m) {
+    std::string fromSquare = squareToString(m.from);
+    std::string toSquare = squareToString(m.to);
+
+    std::cout << fromSquare << toSquare;
+
+    std::cout << std::endl;
+}
 
