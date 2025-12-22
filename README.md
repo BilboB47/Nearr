@@ -1,57 +1,36 @@
 # Nearr - Silnik Szachowy C++
 
-Kompaktowy, silnik szachowy, zaimplementowany w C++ z wykorzystaniem techniki Bitboards (tablice bitowe) dla optymalnej wydajności w manipulacji stanem planszy.
+Silnik szachowy wykorzystujący technikę **Bitboards** do reprezentacji stanu planszy i manipulacji danymi.
 
 ---
 
 ## 🎯 Status Projektu
 
-Projekt znajduje się w fazie **implementacji mechanik podstawowych**. Pełna obsługa ruchów (w tym Roszada, En Passant, Promocja) jest już zaimplementowana. Aktualnie trwają prace nad **Generatorem Ruchów Pseudo-Legalnych** i funkcją weryfikacji szacha.
+Projekt w fazie implementacji **ewaluacji pozycji**. Podstawowe mechaniki poruszania się figur (w tym roszada, en passant i promocja) są zaimplementowane i działają w ramach funkcji `make_move`.
 
-## ⚙️ Kluczowe Technologie i Struktury Danych
+## ⚙️ Kluczowe Technologie
 
-* **Język:** C++
-* **Architektura Planszy:** Bitboards (64-bitowe liczby całkowite)
+* **Język:** C++ (Standard 17/20).
+* **Struktura planszy:** Bitboards (`uint64_t`).
+* **Format pozycji:** Obsługa notacji FEN.
 
-## 🛠️ Zaimplementowane Mechaniki
+## 🛠️ Zaimplementowane Elementy
 
-Poniższe mechaniki są w pełni zaimplementowane, przetestowane i zarządzane w ramach funkcji `Position::make_move()`.
+### I. Stan Planszy i Logika
+* **Parser FEN:** Wczytywanie pozycji, tury, praw roszady i pola en passant.
+* **Zarządzanie stanem:** Wykonywanie ruchów (`make_move`) z poprawną aktualizacją masek bitowych dla wszystkich figur.
+* **Prawa roszady:** Funkcja `update_castling_rights` automatycznie koryguje uprawnienia po ruchach króla, wież lub zbiciach.
 
-### I. Inicjalizacja i Stan Planszy
+### II. Obsługa Ruchów
+* **Ruchy specjalne:** Pełna obsługa roszady, bicia w przelocie (En Passant) oraz promocji piona.
+* **Generowanie ataków:** Wstępnie wygenerowane tablice ataków dla pionów i króla do weryfikacji pól zagrożonych.
 
-* **Pełne Parsowanie FEN:** Poprawne wczytywanie pozycji z notacji FEN (łącznie z turą, prawami roszady i polem En Passant).
-* **Zarządzanie Stanem:** Struktura `Position` przechowuje Bitboards, prawa roszady (`castlingRights`) oraz zmienną `isWhiteMove` (tura gracza).
-* **Wizualizacja:** Funkcja `print_board()` do debugowania.
+### III. Ewaluacja (W trakcie)
+* **Tapered Evaluation:** Przygotowanie podziału oceny na fazy gry (Midgame / Endgame).
+* **PST (Piece-Square Tables):** Wdrażanie wartości pól dla poszczególnych typów figur.
+* **Struktura pionów:** Planowana detekcja słabości (piony izolowane i zdublowane).
 
-### II. Wykonywanie Ruchów (`make_move`)
-
-Logika wykonywania ruchów jest modularna i rozbita na mniejsze, testowalne funkcje pomocnicze.
-
-* **Ruchy Podstawowe:**
-    * `make_simple_move(piece, from, to)`
-    * `remove_captured_piece(captured, to)`
-* **Obsługa Ruchów Specjalnych:**
-    * **Roszada (Castling):** Logika przenoszenia Króla i Wieży (`handle_castling_rook`).
-    * **Promocja (Promotion):** Zaimplementowana funkcja `promote_pawn(move, to_bb)`.
-    * **Bicie En Passant:** Dedykowana obsługa bicia pionka na polu pośrednim.
-* **Zarządzanie Prawami:** W pełni zaimplementowana i przetestowana funkcja `update_castling_rights()`, która poprawnie usuwa prawa roszady po ruchu Króla, Wieży lub zbiciu Wieży przeciwnika.
-
-### III. Generator Ruchów (W Trakcie)
-
-* **Tablice Ataku:** Statycznie wygenerowane tablice dla ruchów pionków (`pawnAttacks`, `pawnMoves`) oraz ataki Króla (`kingAttacks`) dla szybkiego dostępu do potencjalnych pól docelowych.
-* **Szkielet Generatorów:** Zainicjowano funkcje `generatePawnMoves()` i `generateKingMoves()` do generowania ruchów pseudo-legalnych.
-
-## 💻 Struktura Ruchu (`Move`)
-
-Ruch jest skompresowany do 32-bitowej liczby całkowitej (`uint32_t`) za pomocą pól bitowych (bit fields) dla optymalizacji pamięci.
-
-```cpp
-struct Move
-{
-	uint32_t from : 6;       // 0-63
-	uint32_t to : 6;         // 0-63
-	uint32_t piece : 4;      // Typ poruszanej figury
-	uint32_t captured : 4;   // Typ zbitej figury
-	uint32_t flags : 5;      // Flagi specjalne (EP, Roszada, Promocja, Podwójne pchnięcie)
-	uint32_t promotion : 4;  // Typ figury promowanej (Q, R, B, N)
-};
+## 🚀 Plan Rozwoju
+1. Zakończenie logiki oceniania pozycji (Ewaluacja).
+2. Implementacja algorytmu przeszukiwania drzewa ruchów (Search).
+3. Dodanie protokołu komunikacji UCI.
