@@ -5,6 +5,7 @@
 
 //============================================ewualcja na podstawie materia³u=====================================================
 
+
 int evaluate_material(const Position& pos)
 {	
 	int value=0;
@@ -27,9 +28,22 @@ int evaluate_material(const Position& pos)
 }
 
 
-//===========================ewualcja na podstawie pozycji piona=====================================================
-inline int get_pst_value(int square, Color color, const int* table){ //revers for black table
-	return (color == WHITE) ? table[square] : table[square ^ 56];
+
+//===========================ewualcja na podstawie pozycji figury=====================================================
+int pst[2][12][64];
+
+void init_pst() {
+	for (int phase = 0; phase < 2; ++phase) {
+		for (int piece = 0; piece < 6; ++piece) {
+			for (int sq = 0; sq < 64; ++sq) {
+				// Kopiujemy bia³e (0-5)
+				pst[phase][piece][sq] = Bonus_pst[phase][piece][sq];
+
+				// Generujemy czarne (6-11)
+				pst[phase][piece + 6][sq] = -Bonus_pst[phase][piece][sq ^ 56];
+			}
+		}
+	}
 }
 
 int calculate_phase(const Position& pos) {
@@ -44,19 +58,33 @@ int calculate_phase(const Position& pos) {
 	phase += count_set_bits(pos.bitBoard[BLACK_QUEEN]) * 4;
 	return phase;
 }
-double tapered_eval(const Position& pos)
-{	
+
+int evaluate_pst(const Position& pos){
+
+	int mg = 0;
+	int eg = 0;
+
+
 	int phase = calculate_phase(pos);
-	return 0.0;
+	if (phase > 24) phase = 24;//jakby bylo promocja
+
+	for (int i = 0; i < 12; i++) {
+		uint64_t bb_piece = pos.bitBoard[i];
+
+		while (bb_piece) { //liczy dla danej figury
+			uint8_t index = pop_lsb(&bb_piece);//obliczanie dla danego indexu
+			mg += pst[0][i][index];
+			eg += pst[1][i][index];
+		}
+	}
+
+	int score=(eg * (24 - phase) + mg * phase) / 24;
+
+	return (pos.isWhiteMove) ? score : -score;
 }
 
-int compute_midgame_score(const Position& pos)
+//================================================SUMA EVAL===================================================
+int evaluate_all(const Position& pos)
 {
-	int score = 0;
-
-}
-
-int compute_endgame_score(const Position& pos)
-{
-	return 0;
+	return evaluate_material(pos) + evaluate_pst(pos);
 }
