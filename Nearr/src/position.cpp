@@ -313,8 +313,14 @@ UndoInfo Position::make_move(const Move& move){
     info.halfmoveClock = this->halfmoveClock;
         
         uint8_t moving_piece = this->piece_on_square(move.from);
-        uint8_t captured_piece = this->piece_on_square(move.to);
-    
+        uint8_t captured_piece = NO_PIECE;
+
+        if (move.flags == FLAG_CAPTURE || move.flags >= 12) {
+            captured_piece = this->piece_on_square(move.to);
+        }
+
+        info.capturePiece = captured_piece;
+
         //czy nie straci³y sie prawa do roszady
         this->zobristKey ^= Zobrist.castling[this->castlingRights];
         update_castling_rights(move);
@@ -325,7 +331,6 @@ UndoInfo Position::make_move(const Move& move){
         //    return UndoInfo{};
         //}
 
-        info.capturePiece = captured_piece;
 
         uint64_t from_bb = 1ULL << move.from;
         uint64_t to_bb = 1ULL << move.to;

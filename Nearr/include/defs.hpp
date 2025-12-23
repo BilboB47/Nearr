@@ -1,6 +1,18 @@
 #pragma once
 #include <cstdint>
 
+//==========================================================================================================
+//                                       REFAKTORYZACJA SYSTEMOWA 
+//==========================================================================================================
+//
+//  ZMIANA: ZWYK£Y 'enum' -> 'enum class' (Strongly Typed Enums)
+// 
+//  1. BEZPIECZEÑSTWO TYPÓW (Type Safety):
+//  2. UNIKANIE KONFLIKTU NAZW (Name Collisions):
+//  3. CZYSTOŒÆ ARCHITEKTURY (Modern C++ Standard):
+//==========================================================================================================
+
+
 
 
 //==============================POSITION============================================================
@@ -56,7 +68,8 @@ enum MoveFlags : uint8_t {
     FLAG_CASTLE_KINGSIDE = 3,  //0011
     FLAG_CASTLE_QUEENSIDE = 4, //0100
 
-    //DODAÆ FLAGE KTÓRA MÓWI ZE JEST TO BICIE
+    
+    FLAG_CAPTURE = 5, // 0101 nowo dodana flaga
 
     FLAG_PROMOTION_N = 8,      //1000
     FLAG_PROMOTION_B = 9,      //1001

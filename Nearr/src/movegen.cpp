@@ -292,15 +292,23 @@ uint64_t get_rook_attacks(int square, uint64_t board) {
 }
 void generateRookMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
-	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
+	uint64_t enemy = pos.getAllEnemyPieces();
 
 	uint64_t rooks = (pos.isWhiteMove)? pos.bitBoard[WHITE_ROOK] : pos.bitBoard[BLACK_ROOK];
 
-	while (rooks) { //liczy dla danego goñca
+	while (rooks) { //liczy dla danej wie¿y
 		uint8_t index_rook = pop_lsb(&rooks);//okreœla jego pole i usuwa jest puli
 
 		uint64_t moves_to = get_rook_attacks(index_rook, all);
-		moves_to &= not_friendly; //odejmuje pozycje gdzie s¹ friendly figury
+
+		uint64_t captuerd_to = moves_to & enemy;
+		moves_to &= ~all; //odejmuje pozycje gdzie s¹ figury
+		
+		while (captuerd_to) {
+			uint8_t index_move = pop_lsb(&captuerd_to);
+
+			out[count++] = Move{ index_rook, index_move, FLAG_CAPTURE };
+		}
 
 		while (moves_to) {
 			uint8_t index_move = pop_lsb(&moves_to);
@@ -466,15 +474,23 @@ uint64_t get_bishop_attacks(int square, uint64_t board) {
 void generateBishopMoves(const Position& pos, Move* out, int& count) {
 	
 	uint64_t all = pos.getAllPieces();
-	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
-	
+	uint64_t enemy = pos.getAllEnemyPieces();
+
 	uint64_t bishops = (pos.isWhiteMove) ? pos.bitBoard[WHITE_BISHOP] : pos.bitBoard[BLACK_BISHOP];
 
 	while (bishops){ //liczy dla danego goñca
 		uint8_t index_bishop = pop_lsb(&bishops);//okreœla jego pole i usuwa jest puli
 		
 		uint64_t moves_to = get_bishop_attacks(index_bishop, all);
-		moves_to &= not_friendly; //odejmuje pozycje gdzie s¹ friendly figury
+		
+		uint64_t captuerd_to = moves_to & enemy;
+		moves_to &= ~all; //odejmuje pozycje gdzie s¹ figury
+
+		while (captuerd_to) {
+			uint8_t index_move = pop_lsb(&captuerd_to);
+
+			out[count++] = Move{ index_bishop, index_move, FLAG_CAPTURE };
+		}
 
 		while (moves_to) {
 			uint8_t index_move = pop_lsb(&moves_to);
@@ -512,7 +528,7 @@ void initKnightAttacks()
 
 void generateKnightMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
-	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
+	uint64_t enemy = pos.getAllEnemyPieces();
 
 	uint64_t knight = (pos.isWhiteMove) ? pos.bitBoard[WHITE_KNIGHT] : pos.bitBoard[BLACK_KNIGHT];
 
@@ -520,7 +536,15 @@ void generateKnightMoves(const Position& pos, Move* out, int& count) {
 		uint8_t index_knight = pop_lsb(&knight);//okreœla jego pole i usuwa jest puli
 
 		uint64_t moves_to = knightAttacks[index_knight];
-		moves_to &= not_friendly; //odejmuje pozycje gdzie s¹ friendly figury
+
+		uint64_t captuerd_to = moves_to & enemy;
+		moves_to &= ~all; //odejmuje pozycje gdzie s¹ figury
+
+		while (captuerd_to) {
+			uint8_t index_move = pop_lsb(&captuerd_to);
+
+			out[count++] = Move{ index_knight, index_move, FLAG_CAPTURE};
+		}
 
 		while (moves_to) {
 			uint8_t index_move = pop_lsb(&moves_to);
@@ -611,16 +635,24 @@ void generateCastlingMoves(const Position& pos, Move* out, int& count) {
 
 void generateKingMoves(const Position& pos, Move* out, int& count) {
 	uint64_t all = pos.getAllPieces();
-	uint64_t friendly = pos.getAllFriendlyPieces();
+	uint64_t enemy = pos.getAllEnemyPieces();
 
 	uint64_t king = (pos.isWhiteMove) ? pos.bitBoard[WHITE_KING] : pos.bitBoard[BLACK_KING];
 
 	uint8_t index_king = get_lsb(&king);//okreœla jego pole i usuwa jest puli
 
 	uint64_t moves_to = kingAttacks[index_king];
-	moves_to &= (~friendly); //odejmuje pozycje gdzie s¹ friendly figury
+
+	uint64_t captuerd_to = moves_to & enemy;
+	moves_to &= ~all; //odejmuje pozycje gdzie s¹ friendly figury
 
 	const Color ENEMY_COLOR = (pos.isWhiteMove) ? BLACK : WHITE;
+
+	while (captuerd_to) {
+		uint8_t index_move = pop_lsb(&captuerd_to);
+
+		out[count++] = Move{ index_king, index_move, FLAG_CAPTURE};
+	}
 
 	while (moves_to) {
 		uint8_t index_move = pop_lsb(&moves_to);
@@ -725,7 +757,7 @@ void generatePawnMoves(const Position& pos, Move* out, int& count){
 				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_CAPTURE_B};
 				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_CAPTURE_N};
 				}else {
-				out[count++] = Move{ index_pawn, index_move,FLAG_NORMAL};
+				out[count++] = Move{ index_pawn, index_move,FLAG_CAPTURE};
 			}
 		}
 		//==========================ruch do przodu======================================
@@ -779,8 +811,8 @@ uint64_t get_queen_attacks(int square, uint64_t board) {
 	return get_bishop_attacks(square, board) | get_rook_attacks(square, board);
 }
 void generateQueenMoves(const Position& pos, Move* out, int& count) {
-	uint64_t all = pos.getAllPieces();
-	uint64_t not_friendly = ~pos.getAllFriendlyPieces();
+	uint64_t all = pos.getAllPieces();//TUTAJ DAJ FLAG CAPUTRE
+	uint64_t enemy = pos.getAllEnemyPieces();
 
 	uint64_t quenns = (pos.isWhiteMove) ? pos.bitBoard[WHITE_QUEEN] : pos.bitBoard[BLACK_QUEEN];
 
@@ -788,7 +820,14 @@ void generateQueenMoves(const Position& pos, Move* out, int& count) {
 		uint8_t index_queen = pop_lsb(&quenns);//okreœla jego pole i usuwa jest puli
 
 		uint64_t moves_to = get_queen_attacks(index_queen, all);
-		moves_to &= not_friendly; //odejmuje pozycje gdzie s¹ friendly figury
+		uint64_t captuerd_to = moves_to & enemy;
+		moves_to &= ~all; //odejmuje pozycje gdzie s¹ figury
+
+		while (captuerd_to) {
+			uint8_t index_move = pop_lsb(&captuerd_to);
+
+			out[count++] = Move{ index_queen, index_move, FLAG_CAPTURE };
+		}
 
 		while (moves_to) {
 			uint8_t index_move = pop_lsb(&moves_to);
