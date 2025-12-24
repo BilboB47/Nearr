@@ -312,93 +312,80 @@ UndoInfo Position::make_move(const Move& move){
     info.castlingRights = this->castlingRights;   
     info.halfmoveClock = this->halfmoveClock;
         
-        uint8_t moving_piece = this->piece_on_square(move.from);
-        uint8_t captured_piece = NO_PIECE;
+    uint8_t moving_piece = this->piece_on_square(move.from);
+    uint8_t captured_piece = NO_PIECE;
 
-        if (move.flags == FLAG_CAPTURE || move.flags >= 12) {
-            captured_piece = this->piece_on_square(move.to);
-        }
+    if (move.flags & 4) {
+        captured_piece = this->piece_on_square(move.to);
+    }
 
-        info.capturePiece = captured_piece;
+    info.capturePiece = captured_piece;
 
-        //czy nie straci³y sie prawa do roszady
+    uint64_t from_bb = 1ULL << move.from;
+    uint64_t to_bb = 1ULL << move.to;
+
+    Piece moving_color_all = (isWhiteMove) ? WHITE_ALL : BLACK_ALL;
+    Piece captured_color_all = (isWhiteMove) ? BLACK_ALL : WHITE_ALL;
+
+        //-----------------aktualizacja roszad--------------------------------------------------------------------
         this->zobristKey ^= Zobrist.castling[this->castlingRights];
         update_castling_rights(move);
         this->zobristKey ^= Zobrist.castling[this->castlingRights];
 
+        //----------usuniecie zbitej figury----------------------------------------------------------------------------------
+        if (move.flags & 4){
+            if (move.flags != FLAG_EN_PASSANT) { //move.flags & FLAG_EN_PASSANT -> move.flags == FLAG_EN_PASSANT
+                remove_captured_piece(captured_piece, to_bb, captured_color_all);
+            }
+            else {
+                info.epCapturedSquare = move.to + (isWhiteMove ? -8 : +8); //WP bije wiec by BP musia³ staæ -8 wzgledme tego gdzie jest stoi WP po zbiciu
+                info.capturePiece = (this->isWhiteMove ? BLACK_PAWN : WHITE_PAWN);///tutaj dodanie caputerd piece
 
-        //if (moving_piece == NO_PIECE) {
-        //    return UndoInfo{};
-        //}
+                //w zale¿nosci od koloru bierze pole te ktorê przeskoczy³ pion ktory poruszyl sie o 2
+                uint64_t captured_square_bb = (isWhiteMove) ? to_bb >> 8 : to_bb << 8;
+                uint8_t captured_pawn = (isWhiteMove) ? BLACK_PAWN : WHITE_PAWN;
 
+                remove_captured_piece(captured_pawn, captured_square_bb, captured_color_all);
+            }
+        }
 
-        uint64_t from_bb = 1ULL << move.from;
-        uint64_t to_bb = 1ULL << move.to;
+        //----------przesuniecie figury--------------------------------------------------------------------------------
+        make_simple_move(moving_piece, from_bb,to_bb,moving_color_all);
 
-        Piece moving_color_all = (isWhiteMove) ? WHITE_ALL : BLACK_ALL;
-        Piece captured_color_all = (isWhiteMove) ? BLACK_ALL : WHITE_ALL;
-
+        //----------promocja piona--------------------------------------------------------------------------------
+        if (move.flags & 0b1000){ //PROMOTION_MASK
+            promote_pawn(move, to_bb);
+        }
+        
+        //----------ustawienie pola enPassant----------------------------------------------------------------------
         if (info.enPassantSquare != NO_SQUARE) {
             this->zobristKey ^= Zobrist.enPassant[this->enPassantSquare % 8];
         }
-
         this->enPassantSquare = NO_SQUARE;
 
-        //bicie figury
-        if (captured_piece != NO_PIECE && !(move.flags == FLAG_EN_PASSANT)){ //move.flags & FLAG_EN_PASSANT -> move.flags == FLAG_EN_PASSANT
-            remove_captured_piece(captured_piece, to_bb, captured_color_all); 
-        }
-        make_simple_move(moving_piece, from_bb,to_bb,moving_color_all);
-
-        //promocja piona
-        const uint8_t PROMOTION_MASK = 0b1000; //bo wszystki flagi promocji maj¹ 1---
-
-        if (move.flags & PROMOTION_MASK){
-            promote_pawn(move, to_bb);
-        }
-
-        //ustawienie pol enPassant
         if (move.flags == FLAG_PAWN_DOUBLE_PUSH) {
-            if (isWhiteMove){
-                enPassantSquare = move.from+8;
-            }else {
-                enPassantSquare = move.from-8;
-            }
-
+            enPassantSquare = move.from + (isWhiteMove ? 8 : -8);
             this->zobristKey ^= Zobrist.enPassant[this->enPassantSquare % 8];
         }
-    
-        //bicie en Passant
-        if (move.flags == FLAG_EN_PASSANT) { ///move.flags & FLAG_EN_PASSANT => move.flags == FLAG_EN_PASSANT
-            info.epCapturedSquare = move.to + (isWhiteMove ? -8 : +8); //WP bije wiec by BP musia³ staæ -8 wzgledme tego gdzie jest stoi WP po zbiciu
-            info.capturePiece = (this->isWhiteMove ? BLACK_PAWN : WHITE_PAWN);///tutaj dodanie caputerd piece
-            
-            //w zale¿nosci od koloru bierze pole te ktorê przeskoczy³ pion ktory poruszyl sie o 2
-            uint64_t captured_square_bb = (isWhiteMove) ? to_bb >> 8 : to_bb << 8;
-            uint8_t captured_pawn = (isWhiteMove) ? BLACK_PAWN: WHITE_PAWN;
-            
-            remove_captured_piece(captured_pawn, captured_square_bb, captured_color_all);
-        }
 
-
-        //wykonanie roszady
+        //----------wykonanie roszady--------------------------------------------------------------------------------
         if (move.flags == FLAG_CASTLE_KINGSIDE || move.flags == FLAG_CASTLE_QUEENSIDE){
             handle_castling_rook(move);
         }
-        
+
+        //----------zasada pol ruchow--------------------------------------------------------------------------------
         if (captured_piece != NO_PIECE || moving_piece == WHITE_PAWN || moving_piece == BLACK_PAWN) {
             this->halfmoveClock = 0;
         }else {
             this->halfmoveClock++;
         }
 
+        //----------inkrementacja ruchu i zmiana tury--------------------------------------------------------------------------------
         if (!this->isWhiteMove)this->moveNumber++;
-        
-
 
         this->zobristKey ^= Zobrist.sideToMove;
         this->isWhiteMove = !this->isWhiteMove;
-
+        
         return info;
     }
 
@@ -443,14 +430,8 @@ void Position::unmake_castling_rook(const Move& move) {
 }
 void Position::unmake_move(const Move& move, const UndoInfo& info) {
 
-    //uint16_t moveNumber;          zmiana koloru i ruch mniej
     if (this->isWhiteMove)this->moveNumber--;
-
-    //bool isWhiteMove;             zwyk³y swap
     this->isWhiteMove = !this->isWhiteMove;
-
-    //uint8_t capturePiece;		
-    //uint8_t epCapturedSquare;	
     
     //==============================uint64_t bitBoard[14];=============================================
     
@@ -466,8 +447,7 @@ void Position::unmake_move(const Move& move, const UndoInfo& info) {
     // ============================= PROMOCJA =======================================
     if (move.flags & 0b1000) {
         uint8_t pawn = (this->isWhiteMove) ? WHITE_PAWN : BLACK_PAWN;
-        //throw("e");
-        // Usuwamy figurê promowan¹ z pola 'to' (np. Hetmana)
+        // Usuwamy figurê promowan¹ z pola 'to' 
         this->bitBoard[moved_piece] &= ~to_bb;
         this->bitBoard[moving_color_all] &= ~to_bb;
 
@@ -485,11 +465,9 @@ void Position::unmake_move(const Move& move, const UndoInfo& info) {
     }
 
     //===============================postawienie zbitej===================================
-    //dodanie zbitego piona
     if (info.capturePiece != NO_PIECE) {
 
         if (move.flags == FLAG_EN_PASSANT) {
-            //throw("cofam enpasnt");
             int ep_sq = (this->isWhiteMove) ? (move.to - 8) : (move.to + 8);
 
             uint64_t ep_bb = (1ULL << ep_sq);
@@ -512,22 +490,6 @@ void Position::unmake_move(const Move& move, const UndoInfo& info) {
     this->enPassantSquare = info.enPassantSquare;
     this->halfmoveClock = info.halfmoveClock;
     this->zobristKey = info.zobristKey;
-
-
-
-    //this->bitBoard[WHITE_ALL] = this->bitBoard[WHITE_PAWN] |
-    //    this->bitBoard[WHITE_KNIGHT] |
-    //    this->bitBoard[WHITE_BISHOP] |
-    //    this->bitBoard[WHITE_ROOK] |
-    //    this->bitBoard[WHITE_QUEEN] |
-    //    this->bitBoard[WHITE_KING];
-
-    //this->bitBoard[BLACK_ALL] = this->bitBoard[BLACK_PAWN] |
-    //    this->bitBoard[BLACK_KNIGHT] |
-    //    this->bitBoard[BLACK_BISHOP] |
-    //    this->bitBoard[BLACK_ROOK] |
-    //    this->bitBoard[BLACK_QUEEN] |
-    //    this->bitBoard[BLACK_KING];
 
 }
 

@@ -60,16 +60,18 @@ enum Color { WHITE, BLACK };//kolor
 //flagi
 enum MoveFlags : uint8_t {
 
+    //BIT_CAPTURE = 4, // 0100
+    //BIT_PROMOTION = 8, // 1000
+
     FLAG_NORMAL = 0,
 
     FLAG_PAWN_DOUBLE_PUSH = 1, //0001
-    FLAG_EN_PASSANT = 2,       //0010
+    FLAG_CASTLE_KINGSIDE = 2,  //0011
+    FLAG_CASTLE_QUEENSIDE = 3, //0100
 
-    FLAG_CASTLE_KINGSIDE = 3,  //0011
-    FLAG_CASTLE_QUEENSIDE = 4, //0100
 
-    
-    FLAG_CAPTURE = 5, // 0101 nowo dodana flaga
+    FLAG_CAPTURE = 4, // 0100
+    FLAG_EN_PASSANT = 5, //0101
 
     FLAG_PROMOTION_N = 8,      //1000
     FLAG_PROMOTION_B = 9,      //1001
