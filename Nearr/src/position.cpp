@@ -1,5 +1,6 @@
 #include "position.hpp"
 #include "bitboard_utils.hpp"
+#include "eval.hpp"
 
 
 //===============================USTAWIANIE POZYCJI==================================================
@@ -145,7 +146,41 @@ void Position::set_position_FEN(std::string s) {
         this->bitBoard[BLACK_KING];
 
     this->generate_zobrist_key(); //utworzenie klucza zobrist dla ustawionej pozycji
+
 }
+
+//===========================EVAL==============================================================
+
+
+void Position::set_eval_state() {
+    this->currentEval.material = evaluate_material(*this);
+    this->currentEval.pstMG = evaluate_pstMG(*this);
+    this->currentEval.pstEG = evaluate_pstEG(*this);
+}
+
+void Position::set_phase_state(){
+    this->phase = calculate_phase(*this);
+}
+
+inline void Position::add_piece(int piece, int sq) {
+    currentEval.pstMG += pst[0][piece][sq];
+    currentEval.pstEG += pst[1][piece][sq];
+
+    currentEval.material += pieceValues[piece];
+
+    phase += piecePhase[piece];
+}
+
+inline void Position::remove_piece(int piece, int sq) {
+    currentEval.pstMG -= pst[0][piece][sq];
+    currentEval.pstEG -= pst[1][piece][sq];
+
+    currentEval.material -= pieceValues[piece];
+
+    phase -= piecePhase[piece];
+}
+
+
 
 //=====================================ZOBRIST=============================================================
 void Position::generate_zobrist_key() {
@@ -184,6 +219,7 @@ void Position::make_simple_move(uint8_t piece_type, uint64_t from_bb, uint64_t t
     int to_index = get_lsb(&to_bb);
     this->zobristKey ^= Zobrist.pieces[to_index][piece_type];
 
+    //---------Ruch------------------------
     // usun figure z starego pola
     this->bitBoard[piece_type] &= ~from_bb; // U¿ywamy piece_type (Wie¿a lub Król)
     this->bitBoard[moving_color_all] &= ~from_bb;
@@ -191,6 +227,10 @@ void Position::make_simple_move(uint8_t piece_type, uint64_t from_bb, uint64_t t
     // dodaj figure na nowe pole
     this->bitBoard[piece_type] |= to_bb; // U¿ywamy piece_type (Wie¿a lub Król)
     this->bitBoard[moving_color_all] |= to_bb;
+
+    //------eval-----------------------------
+    remove_piece(piece_type,from_index);
+    add_piece(piece_type, to_index);
 }
 void Position::remove_captured_piece(uint8_t captured_piece, uint64_t captured_square_bb, Piece captured_color_all) {
     
@@ -198,9 +238,12 @@ void Position::remove_captured_piece(uint8_t captured_piece, uint64_t captured_s
     int index = get_lsb(&captured_square_bb);
     this->zobristKey ^= Zobrist.pieces[index][captured_piece];
 
-
+    //ruch
     this->bitBoard[captured_piece] &= ~captured_square_bb;
     this->bitBoard[captured_color_all] &= ~captured_square_bb;
+
+    //eval
+    remove_piece(captured_piece, index);
 }
 
 void Position::promote_pawn(const Move& move, uint64_t to_bb)
@@ -233,6 +276,10 @@ void Position::promote_pawn(const Move& move, uint64_t to_bb)
 
     this->bitBoard[pawn] &= ~to_bb; //usun pion ktory jest promowany
     this->bitBoard[promotion_to] |= to_bb; //dodaj now¹ figure
+
+    //eval
+    remove_piece(pawn, index);
+    add_piece(promotion_to, index);
 }
 
 void Position::update_castling_rights(const Move& move)
@@ -428,6 +475,7 @@ void Position::unmake_castling_rook(const Move& move) {
 
     make_simple_move(rook_type, r_to_bb, r_from_bb, moving_color_all);
 }
+
 void Position::unmake_move(const Move& move, const UndoInfo& info) {
 
     if (this->isWhiteMove)this->moveNumber--;
@@ -450,18 +498,23 @@ void Position::unmake_move(const Move& move, const UndoInfo& info) {
         // Usuwamy figurê promowan¹ z pola 'to' 
         this->bitBoard[moved_piece] &= ~to_bb;
         this->bitBoard[moving_color_all] &= ~to_bb;
+        remove_piece(moved_piece, move.to);
 
         // Stawiamy pionka z powrotem na pole 'from'
         this->bitBoard[pawn] |= from_bb;
         this->bitBoard[moving_color_all] |= from_bb;
+        add_piece(pawn, move.from);
     }
     // ============================= ZWYK£Y RUCH ====================================
     else {
         this->bitBoard[moved_piece] &= ~to_bb;
         this->bitBoard[moving_color_all] &= ~to_bb; 
+        remove_piece(moved_piece, move.to);
+
 
         this->bitBoard[moved_piece] |= from_bb;
         this->bitBoard[moving_color_all] |= from_bb; 
+        add_piece(moved_piece, move.from);
     }
 
     //===============================postawienie zbitej===================================
@@ -473,11 +526,13 @@ void Position::unmake_move(const Move& move, const UndoInfo& info) {
             uint64_t ep_bb = (1ULL << ep_sq);
             this->bitBoard[info.capturePiece] |= ep_bb;
             this->bitBoard[captured_color_all] |= ep_bb;
+            add_piece(info.capturePiece, ep_sq);
         }
 
         else {
             this->bitBoard[info.capturePiece] |= to_bb;
             this->bitBoard[captured_color_all] |= to_bb;
+            add_piece(info.capturePiece, move.to);
         }
     }
     
@@ -492,7 +547,6 @@ void Position::unmake_move(const Move& move, const UndoInfo& info) {
     this->zobristKey = info.zobristKey;
 
 }
-
 
 
 //===================ZBIERANIE INFORMACJI NA TEMAT PLANSZY==============================================================

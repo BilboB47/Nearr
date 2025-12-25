@@ -1,9 +1,17 @@
 ﻿#pragma once
 #include "move.hpp"
 #include "zobrist_data.hpp"
+
 #include <iostream>
 #include <cstdint>
 #include <string>
+
+
+struct EvalState {
+    int material;
+    int pstMG; 
+    int pstEG; 
+};
 
 class Position {
 public:
@@ -14,10 +22,19 @@ public:
     uint16_t moveNumber;
     uint8_t halfmoveClock;
 
+
     uint64_t zobristKey;
 
-public:
+    EvalState currentEval;
+    int phase;
 
+public:
+    //===========================EVAL==============================================================
+    void set_eval_state();
+    void set_phase_state();
+
+    void add_piece(int piece, int sq);
+    void remove_piece(int piece, int sq);
     //=====================================ZOBRIST=============================================================
     void generate_zobrist_key();
 

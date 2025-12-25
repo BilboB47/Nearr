@@ -14,7 +14,7 @@ public:
     Move get_best_move(Position& pos, int depth);
 
 private:
-    int alpha_beta(Position& pos, int depth, int alpha, int beta);
-
+    int alpha_beta(Position& pos, int depth, int alpha, int beta, int root_depth);
+    int score_move(Position& pos, Move move);
 };
 

@@ -10,6 +10,15 @@ constexpr int ROOK_VALUE = 500;
 constexpr int QUEEN_VALUE = 900;
 constexpr int KING_VALUE = 20000;
 
+constexpr int pieceValues[12] = {
+	PAWN_VALUE,    KNIGHT_VALUE,  BISHOP_VALUE,  ROOK_VALUE,  QUEEN_VALUE,  KING_VALUE,  // Bia³e
+	-PAWN_VALUE,  -KNIGHT_VALUE, -BISHOP_VALUE, -ROOK_VALUE, -QUEEN_VALUE, -KING_VALUE   // Czarne
+};
+
+constexpr int piecePhase[12] = {
+	0, 1, 1, 2, 4, 0,  
+	0, 1, 1, 2, 4, 0  
+};
 //========================================PeSTO tables=======================================================
 //https://www.chessprogramming.org/PeSTO%27s_Evaluation_Function
 //PAWNS
@@ -133,12 +142,18 @@ constexpr int Bonus_pst[2][6][64] = {
 extern int pst[2][12][64];
 
 void init_pst();
+
 //============================================ewualcja na podstawie pozycji figury (PST)=====================================================
 
-int calculate_phase(const Position& pos);//liczy phase czyli mowi ile figur na planszy mowi jaka jest faza gry
-int evaluate_pst(const Position& pos);
+//liczy phase czyli mowi ile figur na planszy mowi jaka jest faza gry
+int calculate_phase(const Position& pos);
+
+//zwraca sume wartoœci dla pst mid/end game
+int evaluate_pstMG(const Position& pos);
+int evaluate_pstEG(const Position& pos);
+
 //============================================ewualcja na podstawie materia³u=====================================================
 int evaluate_material(const Position& pos);
 
-//================================================SUMA EVAL===================================================
-int evaluate_all(const Position& pos);
+//===========================================================================================================
+int evaluate(const Position& pos);

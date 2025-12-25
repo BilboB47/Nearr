@@ -4,8 +4,7 @@
 
 
 //============================================ewualcja na podstawie materia³u=====================================================
-
-
+//jest to obiektywne poniewa¿ jest to do inicjacji
 int evaluate_material(const Position& pos)
 {	
 	int value=0;
@@ -24,7 +23,7 @@ int evaluate_material(const Position& pos)
 	value -= count_set_bits(pos.bitBoard[BLACK_ROOK]) * ROOK_VALUE;
 	value -= count_set_bits(pos.bitBoard[BLACK_QUEEN]) * QUEEN_VALUE;
 
-	return (pos.isWhiteMove? value : -value);
+	return value;
 }
 
 
@@ -48,25 +47,17 @@ void init_pst() {
 
 int calculate_phase(const Position& pos) {
 	int phase = 0;
-	phase += count_set_bits(pos.bitBoard[WHITE_KNIGHT]) * 1;
-	phase += count_set_bits(pos.bitBoard[BLACK_KNIGHT]) * 1;
-	phase += count_set_bits(pos.bitBoard[WHITE_BISHOP]) * 1;
-	phase += count_set_bits(pos.bitBoard[BLACK_BISHOP]) * 1;
-	phase += count_set_bits(pos.bitBoard[WHITE_ROOK]) * 2;
-	phase += count_set_bits(pos.bitBoard[BLACK_ROOK]) * 2;
-	phase += count_set_bits(pos.bitBoard[WHITE_QUEEN]) * 4;
-	phase += count_set_bits(pos.bitBoard[BLACK_QUEEN]) * 4;
+	
+	for (int i = 0; i < 12; i++) {
+		phase += count_set_bits(pos.bitBoard[i]) * piecePhase[i];
+	}
+	
 	return phase;
 }
 
-int evaluate_pst(const Position& pos){
+int evaluate_pstMG(const Position& pos){
 
 	int mg = 0;
-	int eg = 0;
-
-
-	int phase = calculate_phase(pos);
-	if (phase > 24) phase = 24;//jakby bylo promocja
 
 	for (int i = 0; i < 12; i++) {
 		uint64_t bb_piece = pos.bitBoard[i];
@@ -74,17 +65,43 @@ int evaluate_pst(const Position& pos){
 		while (bb_piece) { //liczy dla danej figury
 			uint8_t index = pop_lsb(&bb_piece);//obliczanie dla danego indexu
 			mg += pst[0][i][index];
+		}
+	}
+
+	return mg;
+}
+int evaluate_pstEG(const Position& pos) {
+
+	int eg = 0;
+
+	for (int i = 0; i < 12; i++) {
+		uint64_t bb_piece = pos.bitBoard[i];
+
+		while (bb_piece) { //liczy dla danej figury
+			uint8_t index = pop_lsb(&bb_piece);//obliczanie dla danego indexu
 			eg += pst[1][i][index];
 		}
 	}
 
-	int score=(eg * (24 - phase) + mg * phase) / 24;
-
-	return (pos.isWhiteMove) ? score : -score;
+	return eg;
 }
 
-//================================================SUMA EVAL===================================================
-int evaluate_all(const Position& pos)
-{
-	return evaluate_material(pos) + evaluate_pst(pos);
+//===========================================================================
+int evaluate(const Position& pos) {
+	int mgScore = pos.currentEval.material + pos.currentEval.pstMG;
+	int egScore = pos.currentEval.material + pos.currentEval.pstEG;
+
+	int phase = pos.phase;
+	if (phase > 24) phase = 24;
+	else if (phase < 0) phase = 0;
+
+	int eval = (mgScore * phase + egScore * (24 - phase)) / 24;
+
+	return (pos.isWhiteMove) ? eval : -eval;
 }
+
+
+
+
+
+
