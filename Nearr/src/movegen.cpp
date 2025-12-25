@@ -319,6 +319,29 @@ void generateRookMoves(const Position& pos, Move* out, int& count) {
 
 }
 
+void generateRookCaptures(const Position& pos, Move* out, int& count)
+{
+	uint64_t all = pos.getAllPieces();
+	uint64_t enemy = pos.getAllEnemyPieces();
+
+	uint64_t rooks = (pos.isWhiteMove) ? pos.bitBoard[WHITE_ROOK] : pos.bitBoard[BLACK_ROOK];
+
+	while (rooks) { //liczy dla danej wie¿y
+		uint8_t index_rook = pop_lsb(&rooks);//okreœla jego pole i usuwa jest puli
+
+		uint64_t moves_to = get_rook_attacks(index_rook, all);
+
+		uint64_t captuerd_to = moves_to & enemy;
+
+		while (captuerd_to) {
+			uint8_t index_move = pop_lsb(&captuerd_to);
+
+			out[count++] = Move{ index_rook, index_move, FLAG_CAPTURE };
+		}
+	}
+
+}
+
 
 //====================================GONIEC=========================================================================
 uint64_t BishopMasks[64]{};
@@ -499,7 +522,28 @@ void generateBishopMoves(const Position& pos, Move* out, int& count) {
 		}
 	}
 
-};
+}
+void generateBishopCaptures(const Position& pos, Move* out, int& count)
+{
+	uint64_t all = pos.getAllPieces();
+	uint64_t enemy = pos.getAllEnemyPieces();
+
+	uint64_t bishops = (pos.isWhiteMove) ? pos.bitBoard[WHITE_BISHOP] : pos.bitBoard[BLACK_BISHOP];
+
+	while (bishops) { //liczy dla danego goñca
+		uint8_t index_bishop = pop_lsb(&bishops);//okreœla jego pole i usuwa jest puli
+
+		uint64_t moves_to = get_bishop_attacks(index_bishop, all);
+
+		uint64_t captuerd_to = moves_to & enemy;
+
+		while (captuerd_to) {
+			uint8_t index_move = pop_lsb(&captuerd_to);
+
+			out[count++] = Move{ index_bishop, index_move, FLAG_CAPTURE };
+		}
+	}
+}
 
 //====================================SKOCZEK=============================================================
 uint64_t knightAttacks[64]{};
@@ -552,6 +596,26 @@ void generateKnightMoves(const Position& pos, Move* out, int& count) {
 			out[count++] = Move{ index_knight, index_move, FLAG_NORMAL };
 		}
 	}
+}
+
+void generateKnightCaptures(const Position& pos, Move* out, int& count)
+{
+	uint64_t enemy = pos.getAllEnemyPieces();
+
+	uint64_t knight = (pos.isWhiteMove) ? pos.bitBoard[WHITE_KNIGHT] : pos.bitBoard[BLACK_KNIGHT];
+
+	while (knight) { //liczy dla danego goñca
+		uint8_t index_knight = pop_lsb(&knight);//okreœla jego pole i usuwa jest puli
+
+		uint64_t captuerd_to = knightAttacks[index_knight] & enemy;
+
+		while (captuerd_to) {
+			uint8_t index_move = pop_lsb(&captuerd_to);
+
+			out[count++] = Move{ index_knight, index_move, FLAG_CAPTURE };
+		}
+	}
+
 }
 
 //====================================KRÓL=============================================================
@@ -661,6 +725,26 @@ void generateKingMoves(const Position& pos, Move* out, int& count) {
 	}
 
 	generateCastlingMoves(pos,out,count);
+
+}
+
+void generateKingCaptures(const Position& pos, Move* out, int& count)
+{
+	uint64_t enemy = pos.getAllEnemyPieces();
+
+	uint64_t king = (pos.isWhiteMove) ? pos.bitBoard[WHITE_KING] : pos.bitBoard[BLACK_KING];
+
+	uint8_t index_king = get_lsb(&king);//okreœla jego pole i usuwa jest puli
+
+	uint64_t captuerd_to = kingAttacks[index_king] & enemy;
+
+	const Color ENEMY_COLOR = (pos.isWhiteMove) ? BLACK : WHITE;
+
+	while (captuerd_to) {
+		uint8_t index_move = pop_lsb(&captuerd_to);
+
+		out[count++] = Move{ index_king, index_move, FLAG_CAPTURE };
+	}
 
 }
 
@@ -806,6 +890,75 @@ void generatePawnMoves(const Position& pos, Move* out, int& count){
 
 }
 
+void generatePawnCaptures(const Position& pos, Move* out, int& count)
+{
+	uint64_t all = pos.getAllPieces();
+	uint64_t enemy = pos.getAllEnemyPieces();
+
+	uint64_t pawns = (pos.isWhiteMove) ? pos.bitBoard[WHITE_PAWN] : pos.bitBoard[BLACK_PAWN];
+	uint8_t index_table = (pos.isWhiteMove) ? WHITE : BLACK;
+
+	uint64_t RANK_1 = 0x00000000000000FFULL;
+	uint64_t RANK_8 = 0xFF00000000000000ULL;
+	const uint64_t PROMOTION_RANK = pos.isWhiteMove ? RANK_8 : RANK_1;
+
+	while (pawns) { //pêtla ob³ugi ka¿dego piona
+		uint8_t index_pawn = pop_lsb(&pawns);
+
+		//=========================BICIE=======================================
+		uint64_t capture_targets = pawnAttacks[index_table][index_pawn];
+		capture_targets &= enemy;
+
+		while (capture_targets) {
+			uint8_t index_move = pop_lsb(&capture_targets);
+
+			uint64_t target_square_bb = 1ULL << index_move;
+
+			if (target_square_bb & PROMOTION_RANK) {
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_CAPTURE_Q };
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_CAPTURE_R };
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_CAPTURE_B };
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_CAPTURE_N };
+			}
+			else {
+				out[count++] = Move{ index_pawn, index_move,FLAG_CAPTURE };
+			}
+		}
+
+		//==========================ruch do przodu======================================
+		uint64_t single_push = pawnSingleMoves[index_table][index_pawn];
+		uint64_t double_push = pawnDoubleMoves[index_table][index_pawn];
+
+		uint64_t push_one = single_push & ~all;
+
+		if (push_one) {
+
+			//==========================ruch o 1======================================
+			uint8_t index_move = get_lsb(&push_one);
+			uint64_t move_bb = (1ULL) << index_move;
+
+			if (move_bb & PROMOTION_RANK) {
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_Q };
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_R };
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_B };
+				out[count++] = Move{ index_pawn, index_move,FLAG_PROMOTION_N };
+			}
+		}
+
+		//==========================bicie enPassant======================================
+		if (pos.enPassantSquare != NO_SQUARE) {
+			uint8_t ep_index = pos.enPassantSquare;
+			uint64_t ep_target_bb = 1ULL << ep_index;
+
+			uint64_t ep_capture_targets = pawnAttacks[index_table][index_pawn];
+
+			if (ep_capture_targets & ep_target_bb) {
+				out[count++] = Move{ index_pawn, ep_index, FLAG_EN_PASSANT };
+			}
+		}
+	}
+}
+
 //====================================HETMAN=============================================================
 uint64_t get_queen_attacks(int square, uint64_t board) {
 	return get_bishop_attacks(square, board) | get_rook_attacks(square, board);
@@ -837,6 +990,27 @@ void generateQueenMoves(const Position& pos, Move* out, int& count) {
 	}
 }
 
+void generateQueenCaptures(const Position& pos, Move* out, int& count)
+{
+	uint64_t all = pos.getAllPieces();
+	uint64_t enemy = pos.getAllEnemyPieces();
+
+	uint64_t quenns = (pos.isWhiteMove) ? pos.bitBoard[WHITE_QUEEN] : pos.bitBoard[BLACK_QUEEN];
+
+	while (quenns) { //liczy dla danego goñca
+		uint8_t index_queen = pop_lsb(&quenns);//okreœla jego pole i usuwa jest puli
+
+		uint64_t moves_to = get_queen_attacks(index_queen, all);
+		uint64_t captuerd_to = moves_to & enemy;
+
+		while (captuerd_to) {
+			uint8_t index_move = pop_lsb(&captuerd_to);
+
+			out[count++] = Move{ index_queen, index_move, FLAG_CAPTURE };
+		}
+	}
+}
+
 //===================================================================================================
 
 void initAttackTables()
@@ -863,6 +1037,19 @@ int generateMoves(const Position& pos, Move* out)
 
 	//32 bit move + vector			16 bit move + tablica
 	//257.344 ns					118.837 ns
+	return count;
+}
+
+int generateCaptures(const Position& pos, Move* out) {
+	int count = 0;
+
+	generatePawnCaptures(pos, out, count);
+	generateKnightCaptures(pos, out, count);
+	generateBishopCaptures(pos, out, count);
+	generateRookCaptures(pos, out, count);
+	generateQueenCaptures(pos, out, count);
+	generateKingCaptures(pos, out, count);
+
 	return count;
 }
 

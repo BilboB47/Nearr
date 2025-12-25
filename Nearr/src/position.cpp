@@ -574,13 +574,13 @@ uint8_t Position::piece_on_square(int sq) const
 char Position::piece_to_char(int piece_index) {
     // Prosta konwersja indeksu piece_index (0-11) na symbol FEN
     switch (piece_index) {
-    case WHITE_PAWN: return 'P';
+    case WHITE_PAWN: return 'I'; //P
     case WHITE_KNIGHT: return 'N';
     case WHITE_BISHOP: return 'B';
     case WHITE_ROOK: return 'R';
     case WHITE_QUEEN: return 'Q';
     case WHITE_KING: return 'K';
-    case BLACK_PAWN: return 'p';
+    case BLACK_PAWN: return 'i';//p
     case BLACK_KNIGHT: return 'n';
     case BLACK_BISHOP: return 'b';
     case BLACK_ROOK: return 'r';

@@ -94,8 +94,6 @@ bool test_compree(const Position& pos, const Position& copy2) {
     return isCorrect;
 }
 
-
-
 uint64_t perft_fast(Position& pos, int depth) {
     if (depth == 0) {
         return 1;
@@ -164,58 +162,11 @@ void run_benchmark(Position& pos, int depth) {
 }
 
 
+
 int main() {
 
-    initAttackTables();
-    init_zobrist_keys();
-    init_pst();
 
-    Position pos;
-    
-    //preft pozycje
-    //pos.set_position_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");//git 3
-    //pos.set_position_FEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");//git ale bylo źle
-    //pos.set_position_FEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");//git 3
-    //pos.set_position_FEN("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"); //git 3
-    //pos.set_position_FEN("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1 "); //git 3
-    //pos.set_position_FEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");//blad d=3
-    //pos.set_position_FEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"); //git
-     
-    //ewaluja   
-    //pos.set_position_FEN("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"); //git
-    //pos.set_position_FEN("8/4P3/8/8/8/8/4k3/4K3 w - - 0 1"); //git
-    //pos.set_position_FEN("4k3/8/8/3N4/8/8/8/4K3 w - - 0 1"); //git
-    //pos.set_position_FEN("N3k3/8/8/8/8/8/8/4K3 w - - 0 1"); //git
-    //pos.set_position_FEN("4k3/8/8/8/8/8/PPPPPPPP/4K3 w - - 0 1"); //git
-    //pos.set_position_FEN("r1b1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKB1R w KQkq - 0 1"); //git
-    
-
-
-        
-    //pos.set_position_FEN("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1");
-    
-    pos.set_position_FEN("1n2r3/2b2pkp/1R6/1Q1P1p2/4q3/2p1P2P/6P1/2B2RK1 w - - 0 1");
-
-    pos.set_eval_state();
-    pos.set_phase_state();
-
-    pos.print_board();
-
-    //run_benchmark(pos,4);
-    //return 0;
-
-    Search engine;
-
-    int depth = 8;
-
-    std::cout << "Silnik mysli..." << std::endl;
-
-    Move bestMove = engine.get_best_move(pos, depth);
-    
-    print_move(bestMove);
-    pos.make_move(bestMove);
-
-    pos.print_board();
+    game();
 
     return 0;
 

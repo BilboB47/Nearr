@@ -46,6 +46,7 @@ uint64_t get_rook_attacks_slow(int square, uint64_t blockers);
 void initRookMagics();
 uint64_t get_rook_attacks(int square, uint64_t board);
 void generateRookMoves(const Position& pos, Move* out, int& count);
+void generateRookCaptures(const Position& pos, Move* out, int& count);
 
 
 //====================================GONIEC============================================================================================================================================================
@@ -61,21 +62,25 @@ uint64_t get_bishop_attacks_slow(int square, uint64_t blockers);
 void initBishopMagics();
 uint64_t get_bishop_attacks(int square, uint64_t board);
 void generateBishopMoves(const Position& pos,Move* out,int  &count);
+void generateBishopCaptures(const Position& pos,Move* out,int  &count);
 
 //====================================HETMAN================================================================================================================================================
 uint64_t get_queen_attacks(int square, uint64_t board);
 void generateQueenMoves(const Position& pos, Move* out, int& count);
+void generateQueenCaptures(const Position& pos, Move* out, int& count);
 
 //====================================SKOCZEK================================================================================================================================================
 extern uint64_t knightAttacks[64];
 void initKnightAttacks();
 void generateKnightMoves(const Position& pos, Move* out, int& count);
+void generateKnightCaptures(const Position& pos, Move* out, int& count);
 
 //====================================KRÓL================================================================================================================================================
 extern uint64_t kingAttacks[64];
 void initKingAttacks();		
 void generateCastlingMoves(const Position& pos, Move* out, int& count);
 void generateKingMoves(const Position& pos, Move* out, int& count);
+void generateKingCaptures(const Position& pos, Move* out, int& count);
 
 //====================================PION================================================================================================================================================
 extern uint64_t pawnAttacks[2][64];
@@ -86,14 +91,16 @@ void initPawnAttacks();
 void initPawnMoves();
 void initPawnTables();
 void generatePawnMoves(const Position& pos, Move* out, int& count);
+void generatePawnCaptures(const Position& pos, Move* out, int& count);
 
 //=========================================================================================================================================================================================
 //---------------------------INICJACJA WSZYSTKICH TABLIC DO RUCHIW ORAZ GENERNOWANIE RUCHÓW----------------------------------------------------------------------------
 //=========================================================================================================================================================================================
 
 void initAttackTables();
-int generateMoves(const Position& pos, Move* out);
 
+int generateMoves(const Position& pos, Move* out);
+int generateCaptures(const Position& pos, Move* out);
 
 
 

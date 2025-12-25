@@ -87,6 +87,6 @@ enum MoveFlags : uint8_t {
 
 
 
+//======================TT=======================================================
 
-
-
+enum class Bound { EXACT, LOWERBOUND, UPPERBOUND };

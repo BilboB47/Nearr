@@ -14,6 +14,12 @@ struct Move
 	Move(uint8_t from, uint8_t to, uint8_t flags = FLAG_NORMAL)
 		: from(from), to(to), flags(flags) {
 	}
+
+	bool operator==(const Move& other) const {
+		return (from == other.from &&
+			to == other.to &&
+			flags == other.flags);
+	}
 };
 
 
