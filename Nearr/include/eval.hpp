@@ -21,7 +21,7 @@ constexpr int piecePhase[12] = {
 };
 //========================================PeSTO tables=======================================================
 //https://www.chessprogramming.org/PeSTO%27s_Evaluation_Function
-//PAWNS
+
 // PST[MG/EG][PIECE][SQUARE]
 constexpr int Bonus_pst[2][6][64] = {
 	{ // --- MIDGAME (mg) ---
@@ -139,6 +139,7 @@ constexpr int Bonus_pst[2][6][64] = {
 
 	 }
 };
+
 extern int pst[2][12][64];
 
 void init_pst();
@@ -155,5 +156,5 @@ int evaluate_pstEG(const Position& pos);
 //============================================ewualcja na podstawie materia³u=====================================================
 int evaluate_material(const Position& pos);
 
-//===========================================================================================================
+//============================================Ewaulacja w danej fazie gry===============================================================
 int evaluate(const Position& pos);

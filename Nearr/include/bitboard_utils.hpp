@@ -1,6 +1,7 @@
-#include <cstdint>
-#include <intrin.h>
 #include "defs.hpp"
+
+#include <cstdint>
+#include <intrin.h> // Obs³uga funkcji typu intrinsics (sprzêtowa akceleracja operacji bitowych)
 
 //============================funkcje pomocnicze do operacji bitowych==============================================
 inline uint8_t pop_lsb(uint64_t* bitboard)

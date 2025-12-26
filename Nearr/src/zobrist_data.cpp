@@ -1,6 +1,6 @@
 	#include "zobrist_data.hpp"
 
-	ZobristTable Zobrist;
+	ZobristTable Zobrist; 
 	
 	void init_zobrist_keys() {
 

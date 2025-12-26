@@ -20,6 +20,7 @@ struct Move
 			to == other.to &&
 			flags == other.flags);
 	}
+
 };
 
 

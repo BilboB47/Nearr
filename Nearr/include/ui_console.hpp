@@ -1,19 +1,27 @@
 #pragma once
-#include <iostream>
 #include "position.hpp"
-#include "movegen.hpp"
 #include "search.hpp"
 
+#include <iostream>
 
 using namespace std;
 
+
+
+//===="konwersja================================================================
 char get_piece_from_number(uint8_t n);
 std::string squareToString(int index);
 std::string moveToString(const Move m);
-Color choose_color();
 
+//=====wybor Gracza=========================================================
+Color choose_color();
+Move choose_move(const std::vector<Move>& legal_moves);
+
+//=====napisy==========================================================================
 void printVictory();
 void printDefeat();
 void printDraw();
+void print_instructions();
 
-void game();
+//====Rozpoczecie gry==========================================================
+void start_game();

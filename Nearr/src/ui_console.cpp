@@ -1,6 +1,9 @@
 ﻿#include "ui_console.hpp"
 
 
+
+
+//===="konwersja================================================================
 char get_piece_from_number(uint8_t n) {
     char piece = ' ';
     switch (n) {
@@ -20,7 +23,6 @@ char get_piece_from_number(uint8_t n) {
     }
     return piece;
 }
-
 std::string squareToString(int index) {
     int file = index % 8;  // kolumna (A–H)
     int rank = index / 8;  // rząd (1–8)
@@ -28,7 +30,6 @@ std::string squareToString(int index) {
     char rankChar = '1' + rank;
     return std::string() + fileChar + rankChar;
 }
-
 std::string moveToString(const Move m) {
     std::string fromSquare = squareToString(m.from);
     std::string toSquare = squareToString(m.to);
@@ -37,6 +38,7 @@ std::string moveToString(const Move m) {
 }
 
 
+//=====wybor Gracza=========================================================
 Color choose_color()
 {
     string choice;
@@ -55,7 +57,6 @@ Color choose_color()
     }
     return WHITE;
 }
-
 Move choose_move(const std::vector<Move>& legal_moves) {
     std::string userInput;
 
@@ -98,6 +99,8 @@ Move choose_move(const std::vector<Move>& legal_moves) {
     }
 }
 
+
+//=====napisy==========================================================================
 void printVictory() {
     cout << " __      __                            .__                  \n";
     cout << "/  \\    /  \\___.__. ________________  |  |   ____   ______  \n";
@@ -122,12 +125,39 @@ void printDraw() {
     cout << " |____|_  /\\___  >__|_|  /__/____  >  \n";
     cout << "        \\/     \\/      \\/        \\/   \n";
 }
+void print_instructions() {
+    cout << "=================================================================\n";
+    cout << "              INSTRUKCJA OBSLUGI SILNIKA SZACHOWEGO              \n";
+    cout << "=================================================================\n";
+    cout << " 1. FORMAT RUCHU:                                               \n";
+    cout << "    Wpisz pole startowe i docelowe, np: e2e4                    \n";
+    cout << "    * ROSZADA: Przesun krola o dwa pola w bok (np. e1g1 lub e1c1)\n";
+    cout << "    * PROMOCJA: Pionek automatycznie zmienia sie w HETMANA (Q)  \n";
+    cout << "                                                                \n";
+    cout << " 2. OZNACZENIA FIGUR (Wielkie - Biale | male - Czarne):         \n";
+    cout << "    K / k  - Krol (King)                                        \n";
+    cout << "    Q / q  - Hetman (Queen)                                     \n";
+    cout << "    R / r  - Wieza (Rook)                                       \n";
+    cout << "    B / b  - Goniec (Bishop)                                    \n";
+    cout << "    N / n  - Skoczek (Knight)                                   \n";
+    cout << "    I / i  - Pionek (Pawn)                                      \n";
+    cout << "=================================================================\n\n";
 
-void game() {
+
+    cout << "\n         Nacisnij ENTER, aby rozpoczac gre... \n \n" ;
+
+    std::cin.get();
+};
+
+
+//====Rozpoczecie gry==========================================================
+void start_game() {
 
     initAttackTables();
     init_zobrist_keys();
     init_pst();
+
+    print_instructions();
 
     Position pos;
     pos.set_position_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -205,5 +235,13 @@ void game() {
     }
 
 }
+
+
+
+
+
+
+
+
 
 

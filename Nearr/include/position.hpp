@@ -2,10 +2,9 @@
 #include "move.hpp"
 #include "zobrist_data.hpp"
 
-#include <iostream>
 #include <cstdint>
 #include <string>
-
+#include <iostream>
 
 struct EvalState {
     int material;
@@ -23,18 +22,22 @@ public:
     uint8_t halfmoveClock;
 
 
-    uint64_t zobristKey;
+    uint64_t zobristKey; //unikatowy klucz danej pozycji | kiedys potrzebny do TT oraz powielenie pozycji
 
     EvalState currentEval;
-    int phase;
+    int phase; //na tej podstawie okresla sie faze gry
+
 
 public:
     //===========================EVAL==============================================================
     void set_eval_state();
     void set_phase_state();
 
+    //------aktualizuje wartosci eval---------------------------------------------------------------------------
     void add_piece(int piece, int sq);
     void remove_piece(int piece, int sq);
+
+
     //=====================================ZOBRIST=============================================================
     void generate_zobrist_key();
 

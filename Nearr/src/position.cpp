@@ -1,6 +1,7 @@
 #include "position.hpp"
-#include "bitboard_utils.hpp"
 #include "eval.hpp"
+
+#include "bitboard_utils.hpp" //funkcje bitowe
 
 
 //===============================USTAWIANIE POZYCJI==================================================
@@ -150,18 +151,16 @@ void Position::set_position_FEN(std::string s) {
 }
 
 //===========================EVAL==============================================================
-
-
 void Position::set_eval_state() {
     this->currentEval.material = evaluate_material(*this);
     this->currentEval.pstMG = evaluate_pstMG(*this);
     this->currentEval.pstEG = evaluate_pstEG(*this);
 }
-
 void Position::set_phase_state(){
     this->phase = calculate_phase(*this);
 }
 
+//------aktualizuje wartosci eval---------------------------------------------------------------------------
 inline void Position::add_piece(int piece, int sq) {
     currentEval.pstMG += pst[0][piece][sq];
     currentEval.pstEG += pst[1][piece][sq];
@@ -170,7 +169,6 @@ inline void Position::add_piece(int piece, int sq) {
 
     phase += piecePhase[piece];
 }
-
 inline void Position::remove_piece(int piece, int sq) {
     currentEval.pstMG -= pst[0][piece][sq];
     currentEval.pstEG -= pst[1][piece][sq];
@@ -179,7 +177,6 @@ inline void Position::remove_piece(int piece, int sq) {
 
     phase -= piecePhase[piece];
 }
-
 
 
 //=====================================ZOBRIST=============================================================
@@ -206,7 +203,6 @@ void Position::generate_zobrist_key() {
 
     this->zobristKey = key;
 }
-
 
 //========================================ROBIENIE RUCHU===============================================================
 void Position::make_simple_move(uint8_t piece_type, uint64_t from_bb, uint64_t to_bb, Piece moving_color_all)
@@ -589,7 +585,6 @@ char Position::piece_to_char(int piece_index) {
     default: return ' ';
     }
 }
-
 void Position::print_board() {
     char board[64];//mailbox
     for (int i = 0; i < 64; i++) board[i] = ' ';

@@ -35,6 +35,7 @@ enum Square : uint8_t { //index oznacza pozycje na szachownicy
     A8, B8, C8, D8, E8, F8, G8, H8,
     NO_SQUARE = 255
 };
+
 /// 8 | 56 57 58 59 60 61 62 63
 /// 7 | 48 49 50 51 52 53 54 55
 /// 6 | 40 41 42 43 44 45 46 47
@@ -83,10 +84,3 @@ enum MoveFlags : uint8_t {
     FLAG_PROMOTION_CAPTURE_R = 14,  //1110
     FLAG_PROMOTION_CAPTURE_Q = 15   //1111
 };
-
-
-
-
-//======================TT=======================================================
-
-enum class Bound { EXACT, LOWERBOUND, UPPERBOUND };
