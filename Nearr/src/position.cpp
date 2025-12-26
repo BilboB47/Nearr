@@ -589,27 +589,45 @@ char Position::piece_to_char(int piece_index) {
     default: return ' ';
     }
 }
+
 void Position::print_board() {
-    std::cout << "  ---------------------------------\n";
+    char board[64];//mailbox
+    for (int i = 0; i < 64; i++) board[i] = ' ';
+
+    for (int piece_index = WHITE_PAWN; piece_index <= BLACK_KING; piece_index++) {
+        uint64_t temp_bb = this->bitBoard[piece_index];
+        while (temp_bb) {
+            uint8_t sq = pop_lsb(&temp_bb); 
+            if (sq < 64) board[sq] = piece_to_char(piece_index);
+        }
+    }
+
+    std::cout << "\n     a   b   c   d   e   f   g   h\n";
+    std::cout << "   -------------------------------\n";
+
     for (int rank = 7; rank >= 0; rank--) {
-        std::cout << rank + 1 << " |"; // Numer ranki
+        std::cout << rank + 1 << " |";
+
         for (int file = 0; file <= 7; file++) {
             int square = rank * 8 + file;
-            char piece_char = ' ';
-
-            // Szukamy figury na danym polu
-            for (int piece_index = WHITE_PAWN; piece_index <= BLACK_KING; piece_index++) {
-                if (this->bitBoard[piece_index] & (1ULL << square)) {
-                    piece_char = piece_to_char(piece_index);
-                    break;
-                }
-            }
-            std::cout << " " << piece_char << " |";
+            std::cout << " " << board[square] << " |";
         }
-        std::cout << "\n  ---------------------------------\n";
+
+        std::cout << " " << rank + 1 << "\n";
+        std::cout << "   -------------------------------\n";
     }
-    std::cout << "    a   b   c   d   e   f   g   h\n";
+
+    std::cout << "     a   b   c   d   e   f   g   h\n\n";
+
     std::cout << "Aktywny ruch: " << (this->isWhiteMove ? "Bialych (w)" : "Czarnych (b)") << "\n";
-    std::cout << "EP Square: " << (this->enPassantSquare == NO_SQUARE ? "-" : std::to_string(this->enPassantSquare)) << "\n";
+
+    if (this->enPassantSquare == NO_SQUARE) {
+        std::cout << "EP Square: -\n";
+    }
+    else {
+        char f = 'A' + (this->enPassantSquare % 8);
+        char r = '1' + (this->enPassantSquare / 8);
+        std::cout << "EP Square: " << f << r << "\n";
+    }
 }
 

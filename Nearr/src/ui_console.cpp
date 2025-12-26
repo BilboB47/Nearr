@@ -36,21 +36,24 @@ std::string moveToString(const Move m) {
     return fromSquare+toSquare;
 }
 
-bool is_choose_white() {
-    char choice;
+
+Color choose_color()
+{
+    string choice;
     while (true) {
-        std::cout << "Wybierz kolor (w - biale, b - czarne): ";
+        std::cout << endl <<"Wybierz kolor (w - biale, b - czarne): ";
         std::cin >> choice;
 
-        if (choice == 'w' || choice == 'W') {
-            return true;  
+        if (choice == "w" || choice == "W") {
+            return WHITE;  
         }
-        if (choice == 'b' || choice == 'B') {
-            return false; 
+        if (choice == "b" || choice == "B") {
+            return BLACK; 
         }
 
         std::cout << "Niepoprawny wybor. Sprobuj ponownie." << std::endl;
     }
+    return WHITE;
 }
 
 Move choose_move(const std::vector<Move>& legal_moves) {
@@ -95,7 +98,30 @@ Move choose_move(const std::vector<Move>& legal_moves) {
     }
 }
 
-
+void printVictory() {
+    cout << " __      __                            .__                  \n";
+    cout << "/  \\    /  \\___.__. ________________  |  |   ____   ______  \n";
+    cout << "\\   \\/\\/   <   |  |/ ___\\_  __ \\__  \\ |  | _/ __ \\ /  ___/  \n";
+    cout << " \\        / \\___  / /_/  >  | \\// __ \\|  |_\\  ___/ \\___ \\   \n";
+    cout << "  \\__/\\  /  / ____\\___  /|__|  (____  /____/\\___  >____  >  \n";
+    cout << "       \\/   \\/   /_____/            \\/          \\/     \\/   \n";
+}
+void printDefeat() {
+    cout << "__________                                          .__                  \n";
+    cout << "\\______   \\_______________ ____   ________________  |  |   ____   ______  \n";
+    cout << " |     ___/\\_  __ \\___   // __ \\ / ___\\_  __ \\__  \\ |  | _/ __ \\ /  ___/  \n";
+    cout << " |    |     |  | \\//    /\\  ___// /_/  >  | \\// __ \\|  |_\\  ___/ \\___ \\   \n";
+    cout << " |____|     |__|  /_____ \\\\___  >___  /|__|  (____  /____/\\___  >____  >  \n";
+    cout << "                        \\/    \\/_____/            \\/          \\/     \\/   \n";
+}
+void printDraw() {
+    cout << "__________                 .__          \n";
+    cout << "\\______   \\ ____   _____ |__| ______  \n";
+    cout << " |       _// __ \\ /     \\|  |/  ___/  \n";
+    cout << " |    |   \\  ___/|  Y Y  \\  |\\___ \\   \n";
+    cout << " |____|_  /\\___  >__|_|  /__/____  >  \n";
+    cout << "        \\/     \\/      \\/        \\/   \n";
+}
 
 void game() {
 
@@ -110,56 +136,33 @@ void game() {
     pos.set_phase_state();
 
     pos.print_board();
-    std::cout << "=====================================================================" << std::endl;
 
 
     Search engine;
-
-    int depth = 7;
-
-    Move UserMove;
-
-    if (is_choose_white()){
-        Move moves[256];
-        int size_moves = generateMoves(pos, moves);
-
-        vector<Move> legal_moves;
-
-        for (int i = 0; i < size_moves; i++) {
-            UndoInfo info = pos.make_move(moves[i]);
-
-            if (!is_in_check_enemy(pos)) {
-                legal_moves.push_back(moves[i]);
-            }
-
-            pos.unmake_move(moves[i], info);
-        }
+    const int depth = 7;
 
 
-        UserMove = choose_move(legal_moves);
-        pos.make_move(UserMove);
-        pos.print_board();
-    }
+    Color UserColor = choose_color();
+    Color CurrColor;
 
     while (1){
-        std::cout << std::endl << "Silnik mysli..." << std::endl << std::endl;
 
-        Move bestMove = engine.get_best_move(pos, depth);
-        std::cout << "=====================================================================" << std::endl;
-        cout << "ruch silnika: " << moveToString(bestMove) << "        nodes: " <<  engine.nodes <<endl;
-        pos.make_move(bestMove);
-        
-        pos.print_board();
-        std::cout << "=====================================================================" << std::endl;
+        CurrColor = (pos.isWhiteMove) ? WHITE : BLACK;
 
+        cout << endl << "=================================================================" << endl;
+        cout << "{NR RUCHU: " << pos.moveNumber << "} {KOLOR: ";
+        cout << (CurrColor == WHITE ? "BIALE " : "CZARNE ");
+        cout << (UserColor == CurrColor ? "(gracz)" : "(komputer)") << "}";
+        cout << endl <<"=================================================================" << endl;
 
-        Move moves[256];
-        int size_moves = generateMoves(pos, moves);
-
-
-        vector<Move> legal_moves;
-
-        for (int i = 0; i < size_moves; i++) {
+        //----------------GRACZ------------------------------------------------------------
+        if (UserColor == CurrColor) { 
+            //pseudolegalne
+            Move moves[256];
+            int size_moves = generateMoves(pos, moves);
+            //legalne (filtr)
+            vector<Move> legal_moves;
+            for (int i = 0; i < size_moves; i++) {
             UndoInfo info = pos.make_move(moves[i]);
 
             if (!is_in_check_enemy(pos)) {
@@ -169,20 +172,38 @@ void game() {
             pos.unmake_move(moves[i], info);
         }
 
+            if (legal_moves.size()==0)break;//brak ruchu
+            
+            //wybór ruchu
+            cout << endl;
+            Move UserMove = choose_move(legal_moves);
+            pos.make_move(UserMove);
+        }
+        //----------------SILNIK------------------------------------------------------------
+        else { 
+            std::cout << std::endl << "Silnik mysli..." << std::endl << std::endl;
+            Move bestMove = engine.get_best_move(pos, depth);
 
-        if (bestMove.from == A1 && bestMove.to == A1 || legal_moves.size() == 0)break;
-        
-        UserMove = choose_move(legal_moves);
-        
-        pos.make_move(UserMove);
+            if (bestMove.from == A1 && bestMove.to == A1)break;//brak ruchu
+            
+            cout << "Ruch silnika: " << moveToString(bestMove) << "                      Nodes: " <<  engine.nodes <<endl;
+            pos.make_move(bestMove);
+
+        }
 
         pos.print_board();
-
     }
 
-    if (is_in_check_friendly(pos))cout << "Przegrales" << std::endl << std::endl;
-    if (is_in_check_enemy(pos))cout << "Wygrales" << std::endl << std::endl;
-    if (!is_in_check_friendly(pos) && !is_in_check_enemy(pos))cout << "Remis" << std::endl << std::endl;
 
+    //---------stan końcowy gry--------------------------------------------------------------------------
+    if (!is_in_check_friendly(pos) && !is_in_check_enemy(pos))printDraw();
+    if (UserColor == CurrColor){
+        printDefeat();
+    }
+    else {
+        printVictory();
+    }
 
 }
+
+

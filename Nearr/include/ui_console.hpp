@@ -10,4 +10,10 @@ using namespace std;
 char get_piece_from_number(uint8_t n);
 std::string squareToString(int index);
 std::string moveToString(const Move m);
+Color choose_color();
+
+void printVictory();
+void printDefeat();
+void printDraw();
+
 void game();
