@@ -6,9 +6,11 @@ Nearr to silnik szachowy oparty na architekturze bitowej (**Bitboards**), zaproj
 
 ## 🖼️ Podgląd Rozgrywki
 
-![Interfejs Silnika Nearr](https://via.placeholder.com/800x400.png?text=Wstaw+Tutaj+Swoj+Zrzut+Ekranu)  
-*(Wskazówka: Wrzuć screena z konsoli do folderu z projektem i podmień link powyżej)*
+Poniżej przedstawiono przebieg tury z perspektywy gracza oraz proces decyzyjny silnika.
 
+| Ruch Gracza | Ruch Silnika (Bot) |
+| :---: | :---: |
+| ![Ruch Gracza](Images/Player.png) | ![Ruch Bota](Images/Bot.png) |
 ---
 
 ## ⚙️ Kluczowe Funkcjonalności
