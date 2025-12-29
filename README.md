@@ -1,36 +1,69 @@
-# Nearr - Silnik Szachowy C++
+# Nearr 1.0 - Silnik Szachowy C++
 
-Silnik szachowy wykorzystujący technikę **Bitboards** do reprezentacji stanu planszy i manipulacji danymi.
+Nearr to silnik szachowy oparty na architekturze bitowej (**Bitboards**), zaprojektowany z myślą o wysokiej wydajności i precyzji obliczeń. Silnik posiada w pełni grywalny interfejs konsolowy, pozwalający na partię człowieka z komputerem.
 
 ---
 
-## 🎯 Status Projektu
+## 🖼️ Podgląd Rozgrywki
 
-Projekt w fazie implementacji **ewaluacji pozycji**. Podstawowe mechaniki poruszania się figur (w tym roszada, en passant i promocja) są zaimplementowane i działają w ramach funkcji `make_move`.
+Poniżej przedstawiono przebieg tury z perspektywy gracza oraz proces decyzyjny silnika.
 
-## ⚙️ Kluczowe Technologie
+| Ruch Gracza | Ruch Silnika (Bot) |
+| :---: | :---: |
+| ![Ruch Gracza](Images/Player.png) | ![Ruch Bota](Images/Bot.png) |
+---
 
-* **Język:** C++ (Standard 17/20).
-* **Struktura planszy:** Bitboards (`uint64_t`).
-* **Format pozycji:** Obsługa notacji FEN.
+## ⚙️ Kluczowe Funkcjonalności
 
-## 🛠️ Zaimplementowane Elementy
+### I. Reprezentacja i Generowanie Ruchów
+* **Bitboards:** Wykorzystanie 64-bitowych masek do błyskawicznych operacji na stanach planszy.
+* **Magic Bitboards:** Implementacja techniki "Magic" do generowania ruchów figur dalekosiężnych (Wieże, Gońce, Hetmany). Pozwala to na natychmiastowe sprawdzanie blokad i linii ataku bez iterowania po polach.
+* **Zobrist Hashing:** Unikalne klucze pozycji generowane za pomocą tablicy Zobrista, umożliwiające detekcję powtórzeń pozycji oraz optymalizację wyszukiwania.
 
-### I. Stan Planszy i Logika
-* **Parser FEN:** Wczytywanie pozycji, tury, praw roszady i pola en passant.
-* **Zarządzanie stanem:** Wykonywanie ruchów (`make_move`) z poprawną aktualizacją masek bitowych dla wszystkich figur.
-* **Prawa roszady:** Funkcja `update_castling_rights` automatycznie koryguje uprawnienia po ruchach króla, wież lub zbiciach.
+### II. Silnik Szukający (Search)
+* **Alpha-Beta Pruning:** Optymalny algorytm przeszukiwania drzewa wariantów, który drastycznie redukuje liczbę analizowanych pozycji poprzez ucinanie nieistotnych gałęzi.
+* **Move Ordering:** Inteligentne sortowanie ruchów (np. bicia figur, PV-move), co zwiększa efektywność ucięć Beta w algorytmie Alpha-Beta.
+* **Obsługa Końca Gry:** Precyzyjne rozpoznawanie mata (z priorytetem najkrótszej drogi) oraz pata.
 
-### II. Obsługa Ruchów
-* **Ruchy specjalne:** Pełna obsługa roszady, bicia w przelocie (En Passant) oraz promocji piona.
-* **Generowanie ataków:** Wstępnie wygenerowane tablice ataków dla pionów i króla do weryfikacji pól zagrożonych.
+### III. Zaawansowana Ewaluacja
+* **Tapered Evaluation:** Płynne przechodzenie oceny między fazą gry środkowej (**Midgame**) a końcówką (**Endgame**) w zależności od materiału na planszy.
+* **PST (Piece-Square Tables):** Ocena pozycji figur na podstawie dedykowanych tabel wartości (premiowanie skoczków w centrum, krola za obroną pionową itp.).
+* **Material Weights:** Klasyczna wycena figur skorelowana z fazą partii.
 
-### III. Ewaluacja (W trakcie)
-* **Tapered Evaluation:** Przygotowanie podziału oceny na fazy gry (Midgame / Endgame).
-* **PST (Piece-Square Tables):** Wdrażanie wartości pól dla poszczególnych typów figur.
-* **Struktura pionów:** Planowana detekcja słabości (piony izolowane i zdublowane).
+---
+
+## 🎮 Instrukcja Obsługi (Tryb Konsolowy)
+
+Po uruchomieniu programu wyświetli się instrukcja, a następnie możliwość wyboru koloru. Gra toczy się w czytelnym trybie tekstowym.
+
+### Zasady sterowania:
+1. **Format ruchu:** Wpisujemy pola w notacji algebraicznej, np. `e2e4`.
+2. **Roszada:** Przesuwamy króla o dwa pola w bok (np. `e1g1` dla krótkiej roszady).
+3. **Promocja:** W obecnej wersji każdy pionek promowany jest automatycznie na **Hetmana (Q)**.
+
+### Legenda Symboli (Wielkie - Białe | małe - Czarne):
+* **K / k** – Król (King)
+* **Q / q** – Hetman (Queen)
+* **R / r** – Wieża (Rook)
+* **B / b** – Goniec (Bishop)
+* **N / n** – Skoczek (Knight)
+* **I / i** – Pionek (Pawn)
+
+---
+
+## 🛠️ Technologie i Standardy
+* **Język:** C++ (Standard 17/20)
+* **Optymalizacja:** Wykorzystanie instrukcji sprzętowych procesora (intrinsics: `_BitScanForward64`, `__popcnt64`) poprzez nagłówek `<intrin.h>`.
+* **Standard pozycji:** Pełna obsługa notacji FEN (Forsyth-Edwards Notation).
 
 ## 🚀 Plan Rozwoju
-1. Zakończenie logiki oceniania pozycji (Ewaluacja).
-2. Implementacja algorytmu przeszukiwania drzewa ruchów (Search).
-3. Dodanie protokołu komunikacji UCI.
+- [ ] Implementacja protokołu **UCI** (Universal Chess Interface).
+- [ ] Wdrożenie **Tablicy Transpozycji (TT)** dla jeszcze głębszego przeszukiwania.
+- [ ] Dodanie **Quiescence Search** (szukanie spokoju), aby wyeliminować "efekt horyzontu" przy wymianach figur.
+
+---
+
+### Jak uruchomić?
+1. Skompiluj projekt w środowisku Visual Studio (MSVC) lub za pomocą GCC/Clang.
+2. Uruchom plik binarny.
+3. Przeczytaj instrukcję wyświetloną na ekranie i naciśnij **ENTER**, aby rozpocząć partię!
