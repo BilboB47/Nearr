@@ -1,4 +1,4 @@
-# Nearr 1.0 - Silnik Szachowy C++
+# Nearr 1.1 - Silnik Szachowy C++
 
 Nearr to silnik szachowy oparty na architekturze bitowej (**Bitboards**), zaprojektowany z myślą o wysokiej wydajności i głębokim przeszukiwaniu drzewa wariantów.
 
