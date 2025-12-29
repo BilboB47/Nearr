@@ -84,3 +84,18 @@ enum MoveFlags : uint8_t {
     FLAG_PROMOTION_CAPTURE_R = 14,  //1110
     FLAG_PROMOTION_CAPTURE_Q = 15   //1111
 };
+
+//===============================TTEntry===================================================
+
+enum class TTFlag : uint8_t {
+    None = 0,
+    Exact = 1, // Dok³adnie
+    Alpha = 2, // Upper Bound: 
+    Beta = 3  // Lower Bound: 
+};
+
+
+
+
+
+
