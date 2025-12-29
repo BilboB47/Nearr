@@ -1,6 +1,6 @@
 # Nearr 1.0 - Silnik Szachowy C++
 
-Nearr to silnik szachowy oparty na architekturze bitowej (**Bitboards**), zaprojektowany z myślą o wysokiej wydajności i precyzji obliczeń. Silnik posiada w pełni grywalny interfejs konsolowy, pozwalający na partię człowieka z komputerem.
+Nearr to silnik szachowy oparty na architekturze bitowej (**Bitboards**), zaprojektowany z myślą o wysokiej wydajności i głębokim przeszukiwaniu drzewa wariantów.
 
 ---
 
@@ -11,59 +11,56 @@ Poniżej przedstawiono przebieg tury z perspektywy gracza oraz proces decyzyjny 
 | Ruch Gracza | Ruch Silnika (Bot) |
 | :---: | :---: |
 | ![Ruch Gracza](Images/Player.png) | ![Ruch Bota](Images/Bot.png) |
+
 ---
 
 ## ⚙️ Kluczowe Funkcjonalności
 
 ### I. Reprezentacja i Generowanie Ruchów
 * **Bitboards:** Wykorzystanie 64-bitowych masek do błyskawicznych operacji na stanach planszy.
-* **Magic Bitboards:** Implementacja techniki "Magic" do generowania ruchów figur dalekosiężnych (Wieże, Gońce, Hetmany). Pozwala to na natychmiastowe sprawdzanie blokad i linii ataku bez iterowania po polach.
-* **Zobrist Hashing:** Unikalne klucze pozycji generowane za pomocą tablicy Zobrista, umożliwiające detekcję powtórzeń pozycji oraz optymalizację wyszukiwania.
+* **Magic Bitboards:** Zaawansowana technika generowania ruchów figur dalekosiężnych (Wieże, Gońce, Hetmany) za pomocą predefiniowanych tabel "magicznych".
+* **Zobrist Hashing:** Implementacja unikalnych kluczy pozycji, pozwalająca na błyskawiczne operacje na Tablicy Transpozycji oraz detekcję powtórzeń (reguła 3-krotnego powtórzenia).
 
 ### II. Silnik Szukający (Search)
-* **Alpha-Beta Pruning:** Optymalny algorytm przeszukiwania drzewa wariantów, który drastycznie redukuje liczbę analizowanych pozycji poprzez ucinanie nieistotnych gałęzi.
-* **Move Ordering:** Inteligentne sortowanie ruchów (np. bicia figur, PV-move), co zwiększa efektywność ucięć Beta w algorytmie Alpha-Beta.
-* **Obsługa Końca Gry:** Precyzyjne rozpoznawanie mata (z priorytetem najkrótszej drogi) oraz pata.
+* **Alpha-Beta Pruning:** Klasyczny algorytm optymalizacji przeszukiwania, redukujący liczbę analizowanych gałęzi.
+* **Iterative Deepening:** Strategia szukania warstwowego, umożliwiająca lepsze sortowanie ruchów i kontrolę czasu.
+* **Transposition Table (TT):** Globalna tablica mieszająca przechowująca wyniki (Score, Depth, Flags: Exact/Alpha/Beta). Pozwala uniknąć ponownego przeliczania tych samych pozycji.
+* **Quiescence Search:** Specjalna faza szukania "ciszy" na końcach gałęzi, eliminująca błędy wynikające z tzw. efektu horyzontu (kontynuacja analizy bić).
+* **Killer Heuristic:** Zapamiętywanie "morderczych ruchów", które spowodowały odcięcia w innych gałęziach, co drastycznie przyspiesza proces szukania.
 
-### III. Zaawansowana Ewaluacja
-* **Tapered Evaluation:** Płynne przechodzenie oceny między fazą gry środkowej (**Midgame**) a końcówką (**Endgame**) w zależności od materiału na planszy.
-* **PST (Piece-Square Tables):** Ocena pozycji figur na podstawie dedykowanych tabel wartości (premiowanie skoczków w centrum, krola za obroną pionową itp.).
-* **Material Weights:** Klasyczna wycena figur skorelowana z fazą partii.
+### III. Ewaluacja i Taktyka
+* **Tapered Evaluation:** Dynamiczne przechodzenie między fazą gry środkowej a końcówką.
+* **PST (Piece-Square Tables):** Pozycjonowanie figur w oparciu o ich strategiczne umiejscowienie na szachownicy.
+* **Mate Distance Pruning:** Logika dążąca do zadania mata w jak najmniejszej liczbie posunięć (korekta punktacji względem głębokości `ply`).
 
 ---
 
 ## 🎮 Instrukcja Obsługi (Tryb Konsolowy)
 
-Po uruchomieniu programu wyświetli się instrukcja, a następnie możliwość wyboru koloru. Gra toczy się w czytelnym trybie tekstowym.
+### Format ruchu:
+Wpisujemy pola w notacji algebraicznej, np. `e2e4`. 
+* **Roszada:** Przesuwamy króla o dwa pola, np. `e1g1`.
+* **Promocja:** Pionek promowany jest automatycznie na **Hetmana (Q)**.
 
-### Zasady sterowania:
-1. **Format ruchu:** Wpisujemy pola w notacji algebraicznej, np. `e2e4`.
-2. **Roszada:** Przesuwamy króla o dwa pola w bok (np. `e1g1` dla krótkiej roszady).
-3. **Promocja:** W obecnej wersji każdy pionek promowany jest automatycznie na **Hetmana (Q)**.
-
-### Legenda Symboli (Wielkie - Białe | małe - Czarne):
-* **K / k** – Król (King)
-* **Q / q** – Hetman (Queen)
-* **R / r** – Wieża (Rook)
-* **B / b** – Goniec (Bishop)
-* **N / n** – Skoczek (Knight)
-* **I / i** – Pionek (Pawn)
+### Legenda Symboli:
+* **Białe (WIELKIE LITERY):** K, Q, R, B, N, I (Pionek)
+* **Czarne (małe litery):** k, q, r, b, n, i (pionek)
 
 ---
 
 ## 🛠️ Technologie i Standardy
 * **Język:** C++ (Standard 17/20)
-* **Optymalizacja:** Wykorzystanie instrukcji sprzętowych procesora (intrinsics: `_BitScanForward64`, `__popcnt64`) poprzez nagłówek `<intrin.h>`.
-* **Standard pozycji:** Pełna obsługa notacji FEN (Forsyth-Edwards Notation).
+* **Optymalizacje sprzętowe:** Wykorzystanie instrukcji procesora (intrinsics: `_BitScanForward64`, `__popcnt64`).
+* **Formaty:** Pełna obsługa notacji FEN.
 
 ## 🚀 Plan Rozwoju
 - [ ] Implementacja protokołu **UCI** (Universal Chess Interface).
-- [ ] Wdrożenie **Tablicy Transpozycji (TT)** dla jeszcze głębszego przeszukiwania.
-- [ ] Dodanie **Quiescence Search** (szukanie spokoju), aby wyeliminować "efekt horyzontu" przy wymianach figur.
+- [ ] **Null Move Pruning:** Przyspieszenie szukania poprzez symulację "oddania ruchu".
+- [ ] **Zarządzanie Czasem:** Logika dostosowująca czas namysłu do pozostałego czasu na zegarze.
 
 ---
 
 ### Jak uruchomić?
-1. Skompiluj projekt w środowisku Visual Studio (MSVC) lub za pomocą GCC/Clang.
+1. Skompiluj projekt za pomocą MSVC (Visual Studio) lub GCC/Clang.
 2. Uruchom plik binarny.
-3. Przeczytaj instrukcję wyświetloną na ekranie i naciśnij **ENTER**, aby rozpocząć partię!
+3. Postępuj zgodnie z instrukcjami w konsoli, aby rozpocząć partię!
