@@ -3,8 +3,6 @@
 #include "search.hpp"
 
 #include <iostream>
-#include <chrono> // Pamiêtaj o dodaniu tego na górze pliku
-#include <iomanip> // Przydatne do zaokr¹glania NPS
 
 using namespace std;
 

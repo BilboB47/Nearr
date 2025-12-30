@@ -161,7 +161,6 @@ void start_game() {
 
     Position pos;
     pos.set_position_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    //pos.set_position_FEN("8/2R5/2P5/2p5/K1P5/8/6rp/6k1 w - - 0 1");
 
     pos.set_eval_state();
     pos.set_phase_state();
@@ -170,7 +169,7 @@ void start_game() {
 
 
     Search engine;
-    const int depth = 8;
+    const int depth = 7;
 
 
     Color UserColor = choose_color();
@@ -209,36 +208,15 @@ void start_game() {
             cout << endl;
             Move UserMove = choose_move(legal_moves);
             pos.make_move(UserMove);
-
-            engine.history_stack[engine.history_size++] = pos.zobristKey;
-              
         }
         //----------------SILNIK------------------------------------------------------------
         else { 
             std::cout << std::endl << "Silnik mysli..." << std::endl << std::endl;
-
-            auto start = std::chrono::high_resolution_clock::now();
-
             Move bestMove = engine.get_best_move(pos, depth);
-
-            auto end = std::chrono::high_resolution_clock::now();
-
-            std::chrono::duration<double> elapsed = end - start;
-            double seconds = elapsed.count();
-
 
             if (bestMove.from == A1 && bestMove.to == A1)break;//brak ruchu
             
-            //cout << "Ruch silnika: " << moveToString(bestMove) << "                      Nodes: " <<  engine.nodes <<endl;
-            double nps = (seconds > 0) ? (engine.nodes / seconds) : 0;
-
-            // 5. Wyświetlamy statystyki
-            cout << "Ruch silnika: " << moveToString(bestMove) << endl;
-            cout << "Czas:         " << fixed << setprecision(3) << seconds << " s" << endl;
-            cout << "Nodes:        " << engine.nodes << endl;
-            cout << "NPS:          " << (long long)nps << endl;
-            cout << "------------------------------------" << endl;
-
+            cout << "Ruch silnika: " << moveToString(bestMove) << "                      Nodes: " <<  engine.nodes <<endl;
             pos.make_move(bestMove);
 
         }
