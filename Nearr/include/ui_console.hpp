@@ -1,8 +1,10 @@
-#pragma once
+﻿#pragma once
 #include "position.hpp"
 #include "search.hpp"
 
 #include <iostream>
+#include <chrono> // Pami�taj o dodaniu tego na g�rze pliku
+#include <iomanip> // Przydatne do zaokr�glania NPS
 
 using namespace std;
 
@@ -25,3 +27,4 @@ void print_instructions();
 
 //====Rozpoczecie gry==========================================================
 void start_game();
+void botVsBot();

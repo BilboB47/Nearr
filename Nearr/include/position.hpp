@@ -6,6 +6,18 @@
 #include <string>
 #include <iostream>
 
+//====roszada bitboard rights table====
+constexpr int castling_mask[64] = {
+    13, 15, 15, 15, 12, 15, 15, 14, // 0-7  : a1-h1
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+     7, 15, 15, 15,  3, 15, 15, 11  // 56-63: a8-h8
+};
+
 struct EvalState {
     int material;
     int pstMG; 

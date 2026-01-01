@@ -4,6 +4,7 @@ int main() {
 
 
     start_game();
+    //botVsBot();
 
     return 0;
 

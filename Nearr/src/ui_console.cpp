@@ -34,7 +34,7 @@ std::string moveToString(const Move m) {
     std::string fromSquare = squareToString(m.from);
     std::string toSquare = squareToString(m.to);
 
-    return fromSquare+toSquare;
+    return fromSquare + toSquare;
 }
 
 
@@ -43,14 +43,14 @@ Color choose_color()
 {
     string choice;
     while (true) {
-        std::cout << endl <<"Wybierz kolor (w - biale, b - czarne): ";
+        std::cout << endl << "Wybierz kolor (w - biale, b - czarne): ";
         std::cin >> choice;
 
         if (choice == "w" || choice == "W") {
-            return WHITE;  
+            return WHITE;
         }
         if (choice == "b" || choice == "B") {
-            return BLACK; 
+            return BLACK;
         }
 
         std::cout << "Niepoprawny wybor. Sprobuj ponownie." << std::endl;
@@ -144,7 +144,7 @@ void print_instructions() {
     cout << "=================================================================\n\n";
 
 
-    cout << "\n         Nacisnij ENTER, aby rozpoczac gre... \n \n" ;
+    cout << "\n         Nacisnij ENTER, aby rozpoczac gre... \n \n";
 
     std::cin.get();
 };
@@ -161,6 +161,7 @@ void start_game() {
 
     Position pos;
     pos.set_position_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    //pos.set_position_FEN("1r2k1nr/p1p1qpbp/b1pp2p1/8/4P3/1BN5/PPP2PPP/R1BQR1K1 w k - 0 1");
 
     pos.set_eval_state();
     pos.set_phase_state();
@@ -169,13 +170,13 @@ void start_game() {
 
 
     Search engine;
-    const int depth = 7;
+    const int depth = 9;
 
 
     Color UserColor = choose_color();
     Color CurrColor;
 
-    while (1){
+    while (1) {
 
         CurrColor = (pos.isWhiteMove) ? WHITE : BLACK;
 
@@ -183,40 +184,61 @@ void start_game() {
         cout << "{NR RUCHU: " << pos.moveNumber << "} {KOLOR: ";
         cout << (CurrColor == WHITE ? "BIALE " : "CZARNE ");
         cout << (UserColor == CurrColor ? "(gracz)" : "(komputer)") << "}";
-        cout << endl <<"=================================================================" << endl;
+        cout << endl << "=================================================================" << endl;
 
         //----------------GRACZ------------------------------------------------------------
-        if (UserColor == CurrColor) { 
+        if (UserColor == CurrColor) {
             //pseudolegalne
             Move moves[256];
             int size_moves = generateMoves(pos, moves);
             //legalne (filtr)
             vector<Move> legal_moves;
             for (int i = 0; i < size_moves; i++) {
-            UndoInfo info = pos.make_move(moves[i]);
+                UndoInfo info = pos.make_move(moves[i]);
 
-            if (!is_in_check_enemy(pos)) {
-                legal_moves.push_back(moves[i]);
+                if (!is_in_check_enemy(pos)) {
+                    legal_moves.push_back(moves[i]);
+                }
+
+                pos.unmake_move(moves[i], info);
             }
 
-            pos.unmake_move(moves[i], info);
-        }
+            if (legal_moves.size() == 0)break;//brak ruchu
 
-            if (legal_moves.size()==0)break;//brak ruchu
-            
             //wybór ruchu
             cout << endl;
             Move UserMove = choose_move(legal_moves);
             pos.make_move(UserMove);
+
+            engine.history_stack[engine.history_size++] = pos.zobristKey;
+
         }
         //----------------SILNIK------------------------------------------------------------
-        else { 
+        else {
             std::cout << std::endl << "Silnik mysli..." << std::endl << std::endl;
+
+            auto start = std::chrono::high_resolution_clock::now();
+
             Move bestMove = engine.get_best_move(pos, depth);
 
+            auto end = std::chrono::high_resolution_clock::now();
+
+            std::chrono::duration<double> elapsed = end - start;
+            double seconds = elapsed.count();
+
+
             if (bestMove.from == A1 && bestMove.to == A1)break;//brak ruchu
-            
-            cout << "Ruch silnika: " << moveToString(bestMove) << "                      Nodes: " <<  engine.nodes <<endl;
+
+            //cout << "Ruch silnika: " << moveToString(bestMove) << "                      Nodes: " <<  engine.nodes <<endl;
+            double nps = (seconds > 0) ? (engine.nodes / seconds) : 0;
+
+            // 5. Wyświetlamy statystyki
+            cout << "Ruch silnika: " << moveToString(bestMove) << endl;
+            cout << "Czas:         " << fixed << setprecision(3) << seconds << " s" << endl;
+            cout << "Nodes:        " << engine.nodes << endl;
+            cout << "NPS:          " << (long long)nps << endl;
+            cout << "------------------------------------" << endl;
+
             pos.make_move(bestMove);
 
         }
@@ -227,7 +249,7 @@ void start_game() {
 
     //---------stan końcowy gry--------------------------------------------------------------------------
     if (!is_in_check_friendly(pos) && !is_in_check_enemy(pos))printDraw();
-    if (UserColor == CurrColor){
+    if (UserColor == CurrColor) {
         printDefeat();
     }
     else {
@@ -236,8 +258,107 @@ void start_game() {
 
 }
 
+void botVsBot() {
+
+        initAttackTables();
+        init_zobrist_keys();
+        init_pst();
+
+        print_instructions();
+
+        Position pos;
+        pos.set_position_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+        pos.set_eval_state();
+        pos.set_phase_state();
+
+        pos.print_board();
 
 
+        Search engine1;
+        Search engine2;
+        const int depth = 9;
+
+
+        Color CurrColor;
+
+        while (1) {
+
+            CurrColor = (pos.isWhiteMove) ? WHITE : BLACK;
+
+            std::cout << endl << "=================================================================" << endl;
+            std::cout << "{NR RUCHU: " << pos.moveNumber << "} {KOLOR: ";
+            std::cout << (CurrColor == WHITE ? "BIALE} " : "CZARNE} ");
+            std::cout << endl << "=================================================================" << endl;
+
+            //----------------GRACZ------------------------------------------------------------
+            if (WHITE == CurrColor) {
+                std::cout << std::endl << "Silnik mysli..." << std::endl << std::endl;
+
+                auto start = std::chrono::high_resolution_clock::now();
+
+                Move bestMove = engine2.get_best_move(pos, depth);
+
+                auto end = std::chrono::high_resolution_clock::now();
+
+                std::chrono::duration<double> elapsed = end - start;
+                double seconds = elapsed.count();
+
+                if (bestMove.from == A1 && bestMove.to == A1)break;//brak ruchu
+
+                //cout << "Ruch silnika: " << moveToString(bestMove) << "                      Nodes: " <<  engine.nodes <<endl;
+                double nps = (seconds > 0) ? (engine1.nodes / seconds) : 0;
+
+                // 5. Wyświetlamy statystyki
+                std::cout << "Ruch silnika: " << moveToString(bestMove) << endl;
+                std::cout << "Czas:         " << fixed << setprecision(3) << seconds << " s" << endl;
+                std::cout << "Nodes:        " << engine1.nodes << endl;
+                std::cout << "NPS:          " << (long long)nps << endl;
+                std::cout << "------------------------------------" << endl;
+
+                pos.make_move(bestMove);
+
+                engine1.history_stack[engine1.history_size++] = pos.zobristKey;
+
+            }
+            //----------------SILNIK------------------------------------------------------------
+            else {
+                std::cout << std::endl << "Silnik mysli..." << std::endl << std::endl;
+
+                auto start = std::chrono::high_resolution_clock::now();
+
+                Move bestMove = engine1.get_best_move(pos, depth);
+
+                auto end = std::chrono::high_resolution_clock::now();
+
+                std::chrono::duration<double> elapsed = end - start;
+                double seconds = elapsed.count();
+
+                if (bestMove.from == A1 && bestMove.to == A1)break;//brak ruchu
+
+                //cout << "Ruch silnika: " << moveToString(bestMove) << "                      Nodes: " <<  engine.nodes <<endl;
+                double nps = (seconds > 0) ? (engine1.nodes / seconds) : 0;
+
+                // 5. Wyświetlamy statystyki
+                std::cout << "Ruch silnika: " << moveToString(bestMove) << endl;
+                std::cout << "Czas:         " << fixed << setprecision(3) << seconds << " s" << endl;
+                std::cout << "Nodes:        " << engine1.nodes << endl;
+                std::cout << "NPS:          " << (long long)nps << endl;
+                std::cout << "------------------------------------" << endl;
+
+                pos.make_move(bestMove);
+
+                engine2.history_stack[engine1.history_size++] = pos.zobristKey;
+            }
+
+            pos.print_board();
+        }
+
+
+        //---------stan końcowy gry--------------------------------------------------------------------------
+        std::cout << "koniec";
+
+}
 
 
 

@@ -1,22 +1,22 @@
-#pragma once
+ï»¿#pragma once
 #include <cstdint>
 
 //==========================================================================================================
 //                                       REFAKTORYZACJA SYSTEMOWA 
 //==========================================================================================================
 //
-//  ZMIANA: ZWYK£Y 'enum' -> 'enum class' (Strongly Typed Enums)
+//  ZMIANA: ZWYKï¿½Y 'enum' -> 'enum class' (Strongly Typed Enums)
 // 
-//  1. BEZPIECZEÑSTWO TYPÓW (Type Safety):
+//  1. BEZPIECZEï¿½STWO TYPï¿½W (Type Safety):
 //  2. UNIKANIE KONFLIKTU NAZW (Name Collisions):
-//  3. CZYSTOŒÆ ARCHITEKTURY (Modern C++ Standard):
+//  3. CZYSTOï¿½ï¿½ ARCHITEKTURY (Modern C++ Standard):
 //==========================================================================================================
 
 
 
 
 //==============================POSITION============================================================
-enum Piece : uint8_t { //s¹ równoznacze z indexami w bitboard
+enum Piece : uint8_t { //sï¿½ rï¿½wnoznacze z indexami w bitboard
     WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN, WHITE_KING,
     BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING,
     WHITE_ALL, BLACK_ALL,
@@ -47,12 +47,12 @@ enum Square : uint8_t { //index oznacza pozycje na szachownicy
 ///     A  B  C  D  E  F  G  H
 
 enum CastlingRights : uint8_t {//flagi prawa do roszad
-    WK = 1,  // 0001: White Kingside (Krótka Bia³e)
-    WQ = 2,  // 0010: White Queenside (D³uga Bia³e)
-    BK = 4,  // 0100: Black Kingside (Krótka Czarne)
-    BQ = 8,  // 1000: Black Queenside (D³uga Czarne)
+    WK = 1,  // 0001: White Kingside (Krï¿½tka Biaï¿½e)
+    WQ = 2,  // 0010: White Queenside (Dï¿½uga Biaï¿½e)
+    BK = 4,  // 0100: Black Kingside (Krï¿½tka Czarne)
+    BQ = 8,  // 1000: Black Queenside (Dï¿½uga Czarne)
 };
-    
+
 
 enum Color { WHITE, BLACK };//kolor
 
@@ -84,3 +84,17 @@ enum MoveFlags : uint8_t {
     FLAG_PROMOTION_CAPTURE_R = 14,  //1110
     FLAG_PROMOTION_CAPTURE_Q = 15   //1111
 };
+
+//===============================TTEntry===================================================
+
+enum class TTFlag : uint8_t {
+    None = 0,
+    Exact = 1, // Dokï¿½adnie
+    Alpha = 2, // Upper Bound: 
+    Beta = 3  // Lower Bound: 
+};
+
+
+
+
+
