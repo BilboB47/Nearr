@@ -64,8 +64,8 @@ int main() {
 ```
 
 ---
+## 📥 Pobieranie
+Najnowszą skompilowaną wersję silnika (pliki .exe) znajdziesz w sekcji **[Releases](https://github.com/BilboB47/Nearr/releases)**.
 
-### Jak uruchomić?
-1. Skompiluj projekt za pomocą MSVC (Visual Studio) lub GCC/Clang.
-2. Uruchom plik binarny.
-3. Postępuj zgodnie z instrukcjami w konsoli, aby rozpocząć partię!
+* **Nearr-uci.exe** – do gry przez interfejsy (GUI) lub na Lichess.
+* **Nearr-console.exe** – do bezpośredniej gry w oknie konsoli.
