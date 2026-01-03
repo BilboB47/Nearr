@@ -46,24 +46,6 @@ Poniżej przedstawiono przebieg tury z perspektywy gracza oraz proces decyzyjny 
 * **Mate Distance Pruning:** Logika dążąca do zadania mata w jak najmniejszej liczbie posunięć.
 
 ---
-
-## 🚀 Uruchamianie i Konfiguracja
-
-Wybór trybu pracy silnika następuje w pliku `main.cpp` poprzez odkomentowanie odpowiedniej funkcji:
-
-```cpp
-int main() {
-    // TRYB 1: Gra bezpośrednia w konsoli (człowiek vs bot)
-    start_game(); 
-
-    // TRYB 2: Protokół UCI (do gry na Lichess lub w zewnętrznych GUI)
-    // uci_loop(); 
-
-    return 0;
-}
-```
-
----
 ## 📥 Pobieranie
 Najnowszą skompilowaną wersję silnika (pliki .exe) znajdziesz w sekcji **[Releases](https://github.com/BilboB47/Nearr/releases)**.
 
