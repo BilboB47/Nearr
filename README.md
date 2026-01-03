@@ -7,7 +7,7 @@
 ## 🏆 Status Projektu i Sukcesy
 * **Ranking Lichess:** ~2000 ELO (Rapid). 
 * **Profil bota:** [@BilboB47](https://lichess.org/@/BilboB47) – zapraszam do rozegrania partii!
-* **Wyniki testowe:** Silnik Nearr 1.1 z powodzeniem rywalizował z silnikami klasy mistrzowskiej:
+* **Wyniki testowe:** Silnik Nearr 1.1 z powodzeniem rywalizował z silnikami:
   * ✅ Wygrana partia przeciwko **Komodo 17**
   * ✅ Wygrana partia przeciwko **Komodo 18**
   * 🤝 Remis w partii przeciwko **Komodo 19**
