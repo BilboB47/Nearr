@@ -44,7 +44,7 @@ public:
     ~Search() {
         delete[] TT_table;
     }
-
+    void clear_tt();
     Move get_best_move(Position& pos, int max_depth);
 private:
     bool is_repetition(uint64_t current_key);

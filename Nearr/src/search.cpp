@@ -2,6 +2,15 @@
 #include "search.hpp"
 #include "bitboard_utils.hpp"
 
+void Search::clear_tt()
+{
+    memset(TT_table, 0, sizeof(TTEntry) * TT_SIZE);
+
+    history_size = 0;
+    memset(killerMoves, 0, sizeof(killerMoves));
+    memset(history_stack, 0, sizeof(history_stack));
+}
+
 //=========================SEARCH================================================================
 Move Search::get_best_move(Position& pos, int max_depth) {
     this->nodes = 0;
@@ -52,11 +61,11 @@ Move Search::get_best_move(Position& pos, int max_depth) {
 
             //----filtr legalno�ci--------------------
             UndoInfo info = pos.make_move(moves[i]);
-            
+
             Color attacking_color = (pos.isWhiteMove) ? WHITE : BLACK;
             uint64_t king_bb = (pos.isWhiteMove) ? pos.bitBoard[BLACK_KING] : pos.bitBoard[WHITE_KING];
             get_lsb(&king_bb);
-            
+
             if (is_square_attacked(pos, get_lsb(&king_bb), attacking_color)) {//is_in_check_enemy(pos)
                 pos.unmake_move(moves[i], info);
                 continue;
@@ -149,7 +158,7 @@ int Search::alpha_beta(Position& pos, int depth, int alpha, int beta, int root_d
         get_lsb(&king_bb);
 
         if (is_square_attacked(pos, get_lsb(&king_bb), attacking_color)) {//is_in_check_enemy(pos)
-        //if (is_in_check_enemy(pos)) {
+            //if (is_in_check_enemy(pos)) {
             pos.unmake_move(moves[i], info);
             continue;
         }
@@ -221,7 +230,7 @@ int Search::quiescence(Position& pos, int alpha, int beta) {
         get_lsb(&king_bb);
 
         if (is_square_attacked(pos, get_lsb(&king_bb), attacking_color)) {//is_in_check_enemy(pos)
-        //if (is_in_check_enemy(pos)) {
+            //if (is_in_check_enemy(pos)) {
             pos.unmake_move(moves[i], info);
             continue;
         }

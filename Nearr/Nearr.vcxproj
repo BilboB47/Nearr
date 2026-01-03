@@ -24,6 +24,7 @@
     <ClCompile Include="src\movegen.cpp" />
     <ClCompile Include="src\position.cpp" />
     <ClCompile Include="src\search.cpp" />
+    <ClCompile Include="src\uci.cpp" />
     <ClCompile Include="src\ui_console.cpp" />
     <ClCompile Include="src\zobrist_data.cpp" />
     <ClCompile Include="tests\test_main.cpp" />
@@ -36,6 +37,7 @@
     <ClInclude Include="include\movegen.hpp" />
     <ClInclude Include="include\position.hpp" />
     <ClInclude Include="include\search.hpp" />
+    <ClInclude Include="include\uci.hpp" />
     <ClInclude Include="include\ui_console.hpp" />
     <ClInclude Include="include\zobrist_data.hpp" />
   </ItemGroup>

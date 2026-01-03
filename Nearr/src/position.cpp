@@ -349,8 +349,6 @@ void Position::handle_castling_rook(const Move& move) {
 //----------------------move/unmake move-----------------------------------------------
 UndoInfo Position::make_move(const Move& move){
     
-    //zrobienie zmienn zrobirst jej zmaiana i na koncu zrobienie ^= key 
-
     UndoInfo info;
     info.zobristKey = this->zobristKey;       
     info.enPassantSquare = this->enPassantSquare;
@@ -375,14 +373,12 @@ UndoInfo Position::make_move(const Move& move){
     Piece captured_color_all = (isWhiteMove) ? BLACK_ALL : WHITE_ALL;
 
         //-----------------aktualizacja roszad--------------------------------------------------------------------
-        //this->zobristKey ^= Zobrist.castling[this->castlingRights];
         key_Zobrist ^= Zobrist.castling[this->castlingRights];
-        //update_castling_rights(move);
+
         this->castlingRights &= castling_mask[move.from];
         this->castlingRights &= castling_mask[move.to];
 
         key_Zobrist ^= Zobrist.castling[this->castlingRights];
-        //this->zobristKey ^= Zobrist.castling[this->castlingRights];
 
         //----------usuniecie zbitej figury----------------------------------------------------------------------------------
         if (move.flags & 4){
@@ -412,14 +408,12 @@ UndoInfo Position::make_move(const Move& move){
         //----------ustawienie pola enPassant----------------------------------------------------------------------
         if (info.enPassantSquare != NO_SQUARE) {
             key_Zobrist ^= Zobrist.enPassant[this->enPassantSquare % 8];
-            //this->zobristKey ^= Zobrist.enPassant[this->enPassantSquare % 8];
         }
         this->enPassantSquare = NO_SQUARE;
 
         if (move.flags == FLAG_PAWN_DOUBLE_PUSH) {
             enPassantSquare = move.from + (isWhiteMove ? 8 : -8);
             key_Zobrist ^= Zobrist.enPassant[this->enPassantSquare % 8];
-            //this->zobristKey ^= Zobrist.enPassant[this->enPassantSquare % 8];
         }
 
         //----------wykonanie roszady--------------------------------------------------------------------------------
@@ -437,7 +431,6 @@ UndoInfo Position::make_move(const Move& move){
         //----------inkrementacja ruchu i zmiana tury--------------------------------------------------------------------------------
         if (!this->isWhiteMove)this->moveNumber++;
 
-        //this->zobristKey ^= Zobrist.sideToMove;
         key_Zobrist ^= Zobrist.sideToMove;
         this->isWhiteMove = !this->isWhiteMove;
         

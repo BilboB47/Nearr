@@ -272,7 +272,7 @@ void initRookMagics() {
 
 	}
 }
-
+	
 uint64_t get_rook_attacks(int square, uint64_t board) {
 
 	//co blokuje wie¿e na tym polu
@@ -1026,6 +1026,7 @@ int generateMoves(const Position& pos, Move* out)
 {	
 	int count = 0;
 	//dla pozycji r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1	
+	
 										//32 bit move	->	16 bit move
 	generatePawnMoves(pos, out, count);		//159.195 ns	->	35.12 ns
 	generateKnightMoves(pos, out, count);	//158.12 ns		->	7.301 ns
@@ -1054,3 +1055,7 @@ int generateCaptures(const Position& pos, Move* out) {
 }
 
 
+
+
+
+	
